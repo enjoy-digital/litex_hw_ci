@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import json
+import argparse
+import shutil
+import subprocess
+
+# Helpers ------------------------------------------------------------------------------------------
+
+def create_third_party_dir():
+    if not os.path.exists("third_party"):
+        os.makedirs("third_party")
+
+# Linux Build --------------------------------------------------------------------------------------
+
+def linux_clean():
+    ret = 0
+    if os.path.exists("third_party/buildroot"):
+        os.chdir("third_party/buildroot")
+        ret = os.system("make clean")
+        os.chdir("../../")
+    return ret
+
+def linux_build():
+    # Be sure third_party dir is present and switch to it.
+    create_third_party_dir()
+    os.chdir("third_party")
+
+    # Get Buildroot.
+    if not os.path.exists("buildroot"):
+        ret = os.system("git clone http://github.com/buildroot/buildroot")
+        if ret != 0:
+            return ret
+    os.chdir("buildroot")
+
+    # Configure Buildroot.
+    ret = os.system("make BR2_EXTERNAL=../../buildroot/ litex_vexriscv_defconfig")
+    if ret != 0:
+        return ret
+
+    # Build Linux Images.
+    ret = os.system("make")
+
+    # Go back to repo root directory.
+    os.chdir("../../")
+    return ret
+
+def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
+    ret = os.system(f"cp images/* /tftpboot/")
+    ret |= os.system(f"cp images/boot_rootfs_{rootfs}.json /tftpboot/boot.json")
+    return ret
+
+# Device Tree --------------------------------------------------------------------------------------
+
+from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
+
+# DTS generation ---------------------------------------------------------------------------
+def generate_dts(board_name, rootfs="ram0"):
+    json_src = os.path.join("build", board_name, "soc.json")
+    dts = os.path.join("build", board_name, "{}.dts".format(board_name))
+    initrd   = "enabled" if rootfs == "ram0" else "disabled"
+
+    with open(json_src) as json_file, open(dts, "w") as dts_file:
+        dts_content = litex_generate_dts(json.load(json_file), initrd=initrd, polling=False, root_device=rootfs)
+        dts_file.write(dts_content)
+
+# DTS compilation --------------------------------------------------------------------------
+def compile_dts(board_name, symbols=False):
+    dts = os.path.join("build", board_name, "{}.dts".format(board_name))
+    dtb = os.path.join("build", board_name, "{}.dtb".format(board_name))
+    subprocess.check_call(
+        "dtc {} -O dtb -o {} {}".format("-@" if symbols else "", dtb, dts), shell=True)
+
+# DTB combination --------------------------------------------------------------------------
+def combine_dtb(board_name, overlays=""):
+    dtb_in = os.path.join("build", board_name, "{}.dtb".format(board_name))
+    dtb_out = os.path.join("images", "rv32.dtb")
+    if overlays == "":
+        shutil.copyfile(dtb_in, dtb_out)
+    else:
+        subprocess.check_call(
+            "fdtoverlay -i {} -o {} {}".format(dtb_in, dtb_out, overlays), shell=True)
+
+# Main ---------------------------------------------------------------------------------------------
+
+def main():
+    print("""
+              __   _ __      _  __
+             / /  (_) /____ | |/_/
+            / /__/ / __/ -_)>  <
+           /____/_/\\__/\\__/_/|_|
+           LiteX Hardware CI Tests.
+
+        Copyright 2024 / Enjoy-Digital and LiteX developers.
+""")
+    description = "LiteX Hardware CI Tests.\n\n"
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument("--board",    default=None,        help="Select Board for build (digilent_arty or ti60).")
+    parser.add_argument("--cpu-type", default=None,        help="Select CPU to use (vexriscv or naxriscv).")
+    parser.add_argument("--baudrate", default=115200,      help="UART Baudrate.")
+    parser.add_argument("--build",    action="store_true", help="Build SoC on selected board.")
+    parser.add_argument("--load",     action="store_true", help="Load SoC on selected board.")
+    parser.add_argument("--all",      action="store_true", help="do all steps including load.")
+
+    parser.add_argument("--rootfs", default="ram0", help="Location of the RootFS: ram0 or mmcblk0p2")
+
+    parser.add_argument("--linux-clean",          action="store_true", help="Clean Linux Build.")
+    parser.add_argument("--linux-build",          action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
+    parser.add_argument("--linux-prepare-tftp",   action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
+
+    args = parser.parse_args()
+
+    # SoC/Board.
+    # ----------
+    if args.cpu_type == "vexriscv":
+        cpu_config = f"--cpu-type=vexriscv_smp --cpu-variant=linux "
+        cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6"
+    elif args.cpu_type == "naxriscv":
+        cpu_config = f"--cpu-type=naxriscv --variant=a7-100 "
+        cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu"
+    else:
+        print("Error: unknown cpu type")
+        return
+    soc_config = f"--bus-bursting --uart-baudrate={int(float(args.baudrate))}"
+    board_cmd  = {
+        "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --with-sdcard",
+        "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
+    }[args.board]
+    if args.build or args.all:
+        print(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
+        ret = os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
+        if ret != 0:
+            return
+
+    # Linux.
+    # ------
+    if args.linux_clean or args.all:
+        if linux_clean() != 0:
+            return
+
+    if args.linux_build or args.all:
+        shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
+        # Device Tree.
+        # ------------
+        generate_dts(args.board, rootfs=args.rootfs)
+        compile_dts(args.board)
+        combine_dtb(args.board)
+
+        # Buildroot.
+        # ----------
+        if linux_build() != 0:
+            return
+
+    if args.linux_prepare_tftp or args.all:
+        if linux_prepare_tftp(rootfs=args.rootfs) != 0:
+            return
+
+    if args.load or args.all:
+        os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --load")
+
+if __name__ == "__main__":
+    main()
