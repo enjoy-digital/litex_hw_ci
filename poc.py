@@ -81,6 +81,26 @@ litex_ci_configs = {
         command = "--cpu-type=femtorv --integrated-main-ram-size=0x100",
         tty     = "/dev/ttyUSB1",
     ),
+    "trellisboard:firev" : LiteXCIConfig(
+        target  = "trellisboard",
+        command = "--cpu-type=firev --integrated-main-ram-size=0x100",
+        tty     = "/dev/ttyUSB1",
+    ),
+    "trellisboard:vexriscv-min" : LiteXCIConfig(
+        target  = "trellisboard",
+        command = "--cpu-type=vexriscv --cpu-variant=minimal --integrated-main-ram-size=0x100",
+        tty     = "/dev/ttyUSB1",
+    ),
+    "trellisboard:vexriscv-lite" : LiteXCIConfig(
+        target  = "trellisboard",
+        command = "--cpu-type=vexriscv --cpu-variant=lite --integrated-main-ram-size=0x100",
+        tty     = "/dev/ttyUSB1",
+    ),
+    "trellisboard:vexriscv-full" : LiteXCIConfig(
+        target  = "trellisboard",
+        command = "--cpu-type=vexriscv --cpu-variant=full --integrated-main-ram-size=0x100",
+        tty     = "/dev/ttyUSB1",
+    ),
 }
 
 # LiteX CI Build/Test ------------------------------------------------------------------------------
@@ -103,3 +123,90 @@ for name, results in report.items():
     print(f"\n{name}:")
     for step, status in results.items():
         print(f"  {step.ljust(step_length)}: {status}")
+
+# LiteX CI HTML report -----------------------------------------------------------------------------
+
+html_report = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LiteX CI Report</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #222;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #333;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background-color: #444;
+            color: #fff;
+        }
+        tr:hover {
+            background-color: #555;
+        }
+        .BUILD_ERROR {
+            color: red;
+        }
+        .LOAD_ERROR {
+            color: red;
+        }
+        .TEST_ERROR {
+            color: red;
+        }
+        .NOT_RUN {
+            color: orange;
+        }
+        .SUCCESS {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LiteX CI Report</h1>
+        <table>
+            <tr>
+                <th>Config</th>
+                <th>Build</th>
+                <th>Load</th>
+                <th>Test</th>
+            </tr>
+"""
+
+for name, results in report.items():
+    html_report += f"<tr><td>{name}</td>"
+    for step, status in results.items():
+        status_class = status
+        html_report += f"<td class='{status_class}'>{status}</td>"
+    html_report += "</tr>"
+
+html_report += """
+        </table>
+    </div>
+</body>
+</html>
+"""
+
+with open('report.html', 'w') as html_file:
+    html_file.write(html_report)
