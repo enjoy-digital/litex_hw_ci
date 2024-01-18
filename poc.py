@@ -43,7 +43,7 @@ class LiteXCIConfig:
         return LiteXCIStatus.SUCCESS
 
     def test(self, send="reboot\n", check="Memtest OK", timeout=5.0):
-        with serial.Serial(self.tty, 115200, timeout=1) as ser:
+        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser:
                 for cmd in send:
                     ser.write(bytes(cmd, "utf-8"))
                 start_time = time.time()
