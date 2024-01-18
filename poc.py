@@ -157,7 +157,7 @@ def generate_html_report(report):
                 text-align: left;
                 padding: 12px 15px;
                 border-bottom: 1px solid #444;
-                white-space: nowrap; /* Prevent text from wrapping */
+                white-space: nowrap;
             }}
             th {{
                 background-color: #444;
@@ -186,6 +186,19 @@ def generate_html_report(report):
     <body>
         <div class="container">
             <h1>LiteX CI Report</h1>
+    """
+
+    tests_executed = sum(1 for results in report.values() if any(status != LiteXCIStatus.NOT_RUN for status in results.values()))
+    total_seconds = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
+
+    # Convert total_seconds to hours, minutes, and seconds
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Add the summary line with the formatted total duration
+    html_report += f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
+
+    html_report += """
             <table>
                 <tr>
                     <th>Config</th>
@@ -199,8 +212,8 @@ def generate_html_report(report):
 
     for name, results in report.items():
         html_report += f"<tr><td>{name}</td>"
-        time_value     = results.get('Time',     'N/A')
-        duration_value = results.get('Duration', 'N/A')
+        time_value     = results.get('Time', '-')
+        duration_value = results.get('Duration', '-')
         html_report += f"<td>{time_value}</td>"
         html_report += f"<td>{duration_value}</td>"
         for step, status in results.items():
@@ -218,7 +231,6 @@ def generate_html_report(report):
 
     with open('report.html', 'w') as html_file:
         html_file.write(html_report)
-
 # LiteX CI Build/Test ------------------------------------------------------------------------------
 
 steps  = ['build', 'load', 'test']
