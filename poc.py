@@ -109,11 +109,16 @@ steps  = ['build', 'load', 'test']
 report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN.name for step in steps} for name in litex_ci_configs}
 
 for name, config in litex_ci_configs.items():
+    start_time = time.time()
     for step in steps:
         status = getattr(config, step)()
         report[name][step.capitalize()] = status.name
         if status != LiteXCIStatus.SUCCESS:
             break  # Skip remaining steps if the current step fails
+    end_time = time.time()
+    duration = end_time - start_time
+    report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+    report[name]['Duration'] = f"{duration:.2f} seconds"
 
 # LiteX CI Report ----------------------------------------------------------------------------------
 
@@ -157,6 +162,7 @@ html_report = """
             text-align: left;
             padding: 12px 15px;
             border-bottom: 1px solid #444;
+            white-space: nowrap; /* Prevent text from wrapping */
         }
         th {
             background-color: #444;
@@ -188,6 +194,8 @@ html_report = """
         <table>
             <tr>
                 <th>Config</th>
+                <th>Time</th>
+                <th>Duration</th>
                 <th>Build</th>
                 <th>Load</th>
                 <th>Test</th>
@@ -196,9 +204,12 @@ html_report = """
 
 for name, results in report.items():
     html_report += f"<tr><td>{name}</td>"
+    html_report += f"<td>{results['Time']}</td>"
+    html_report += f"<td>{results['Duration']}</td>"
     for step, status in results.items():
-        status_class = status
-        html_report += f"<td class='{status_class}'>{status}</td>"
+        if step not in ['Time', 'Duration']:
+            status_class = status
+            html_report += f"<td class='{status_class}'>{status}</td>"
     html_report += "</tr>"
 
 html_report += """
