@@ -123,22 +123,124 @@ litex_ci_configs = {
     ),
 }
 
+# LiteX CI HTML report -----------------------------------------------------------------------------
+
+def generate_html_report(report):
+    html_report = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>LiteX CI Report</title>
+        <style>
+            body {{
+                font-family: Arial, Helvetica, sans-serif;
+                background-color: #222;
+                color: #fff;
+                margin: 0;
+                padding: 0;
+            }}
+            .container {{
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            h1 {{
+                font-size: 24px;
+            }}
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                background-color: #333;
+                margin-top: 20px;
+            }}
+            th, td {{
+                text-align: left;
+                padding: 12px 15px;
+                border-bottom: 1px solid #444;
+                white-space: nowrap; /* Prevent text from wrapping */
+            }}
+            th {{
+                background-color: #444;
+                color: #fff;
+            }}
+            tr:hover {{
+                background-color: #555;
+            }}
+            .BUILD_ERROR {{
+                color: red;
+            }}
+            .LOAD_ERROR {{
+                color: red;
+            }}
+            .TEST_ERROR {{
+                color: red;
+            }}
+            .NOT_RUN {{
+                color: orange;
+            }}
+            .SUCCESS {{
+                color: green;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>LiteX CI Report</h1>
+            <table>
+                <tr>
+                    <th>Config</th>
+                    <th>Time</th>
+                    <th>Duration</th>
+                    <th>Build</th>
+                    <th>Load</th>
+                    <th>Test</th>
+                </tr>
+    """
+
+    for name, results in report.items():
+        html_report += f"<tr><td>{name}</td>"
+        time_value     = results.get('Time',     'N/A')
+        duration_value = results.get('Duration', 'N/A')
+        html_report += f"<td>{time_value}</td>"
+        html_report += f"<td>{duration_value}</td>"
+        for step, status in results.items():
+            if step not in ['Time', 'Duration']:
+                status_class = status.name
+                html_report += f"<td class='{status_class}'>{status.name}</td>"
+        html_report += "</tr>"
+
+    html_report += """
+            </table>
+        </div>
+    </body>
+    </html>
+    """
+
+    with open('report.html', 'w') as html_file:
+        html_file.write(html_report)
+
 # LiteX CI Build/Test ------------------------------------------------------------------------------
 
 steps  = ['build', 'load', 'test']
-report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN.name for step in steps} for name in litex_ci_configs}
+report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
+
+# Generate the initial HTML report
+generate_html_report(report)
 
 for name, config in litex_ci_configs.items():
     start_time = time.time()
     for step in steps:
         status = getattr(config, step)()
-        report[name][step.capitalize()] = status.name
+        report[name][step.capitalize()] = status
         if status != LiteXCIStatus.SUCCESS:
             break  # Skip remaining steps if the current step fails
     end_time = time.time()
     duration = end_time - start_time
     report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
     report[name]['Duration'] = f"{duration:.2f} seconds"
+
+    # Update the HTML report after each configuration
+    generate_html_report(report)
 
 # LiteX CI Report ----------------------------------------------------------------------------------
 
@@ -147,97 +249,4 @@ step_length = max(len(step) for step in steps)
 for name, results in report.items():
     print(f"\n{name}:")
     for step, status in results.items():
-        print(f"  {step.ljust(step_length)}: {status}")
-
-# LiteX CI HTML report -----------------------------------------------------------------------------
-
-html_report = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>LiteX CI Report</title>
-    <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #222;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            font-size: 24px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #333;
-            margin-top: 20px;
-        }
-        th, td {
-            text-align: left;
-            padding: 12px 15px;
-            border-bottom: 1px solid #444;
-            white-space: nowrap; /* Prevent text from wrapping */
-        }
-        th {
-            background-color: #444;
-            color: #fff;
-        }
-        tr:hover {
-            background-color: #555;
-        }
-        .BUILD_ERROR {
-            color: red;
-        }
-        .LOAD_ERROR {
-            color: red;
-        }
-        .TEST_ERROR {
-            color: red;
-        }
-        .NOT_RUN {
-            color: orange;
-        }
-        .SUCCESS {
-            color: green;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>LiteX CI Report</h1>
-        <table>
-            <tr>
-                <th>Config</th>
-                <th>Time</th>
-                <th>Duration</th>
-                <th>Build</th>
-                <th>Load</th>
-                <th>Test</th>
-            </tr>
-"""
-
-for name, results in report.items():
-    html_report += f"<tr><td>{name}</td>"
-    html_report += f"<td>{results['Time']}</td>"
-    html_report += f"<td>{results['Duration']}</td>"
-    for step, status in results.items():
-        if step not in ['Time', 'Duration']:
-            status_class = status
-            html_report += f"<td class='{status_class}'>{status}</td>"
-    html_report += "</tr>"
-
-html_report += """
-        </table>
-    </div>
-</body>
-</html>
-"""
-
-with open('report.html', 'w') as html_file:
-    html_file.write(html_report)
+        print(f"  {step.ljust(step_length)}: {status.name}")
