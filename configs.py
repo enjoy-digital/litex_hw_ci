@@ -65,24 +65,24 @@ litex_ci_configs = {
     # Digilent-Arty.
     "arty:vexriscv-all-peripherals" : LiteXCIConfig(
         target  = "digilent_arty",
-        command = "--cpu-type=vexriscv --with-ethernet --with-sdcard --with-spiflash",
-        tty     = "/dev/ttyUSB1",
+        command = "--cpu-type=vexriscv --with-ethernet --with-sdcard --with-spi-flash",
+        #tty     = "/dev/ttyUSB1",
     ),
     "arty:naxriscv-32-all-peripherals" : LiteXCIConfig(
         target  = "digilent_arty",
-        command = "--cpu-type=naxriscv --with-ethernet --with-sdcard --with-spiflash",
-        tty     = "/dev/ttyUSB1",
+        command = "--cpu-type=naxriscv --with-ethernet --with-sdcard --with-spi-flash",
+        #tty     = "/dev/ttyUSB1",
     ),
     # SQRL-XCU1525.
     "xcu1525:vexriscv-all-peripherals" : LiteXCIConfig(
         target  = "sqrl_xcu1525",
         command = "--cpu-type=vexriscv",
-        tty     = "/dev/ttyUSB1",
+        #tty     = "/dev/ttyUSB1",
     ),
     "xcu1525:naxriscv-32-all-peripherals" : LiteXCIConfig(
         target  = "sqrl_xcu1525",
         command = "--cpu-type=naxriscv",
-        tty     = "/dev/ttyUSB1",
+        #tty     = "/dev/ttyUSB1",
     ),
 }
 

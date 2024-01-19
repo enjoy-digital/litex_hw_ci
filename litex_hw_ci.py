@@ -39,6 +39,8 @@ class LiteXCIConfig:
         return LiteXCIStatus.SUCCESS
 
     def load(self):
+        if self.tty == "":
+            return LiteXCIStatus.LOAD_ERROR
         if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --load"):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
