@@ -98,17 +98,19 @@ def main():
     description = "LiteX Hardware CI Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("--board",    default=None,        help="Select Board for build (digilent_arty or ti60).")
-    parser.add_argument("--cpu-type", default=None,        help="Select CPU to use (vexriscv or naxriscv).")
-    parser.add_argument("--baudrate", default=115200,      help="UART Baudrate.")
-    parser.add_argument("--build",    action="store_true", help="Build SoC on selected board.")
-    parser.add_argument("--load",     action="store_true", help="Load SoC on selected board.")
-    parser.add_argument("--all",      action="store_true", help="do all steps including load.")
+    parser.add_argument("--board",         default=None,        help="Select Board for build (digilent_arty or ti60).")
+    parser.add_argument("--board-variant", default=None,        help="Board variant")
+    parser.add_argument("--cpu-type",      default=None,        help="Select CPU to use (vexriscv or naxriscv).")
+    parser.add_argument("--baudrate",      default=115200,      help="UART Baudrate.")
+    parser.add_argument("--build",         action="store_true", help="Build SoC on selected board.")
+    parser.add_argument("--load",          action="store_true", help="Load SoC on selected board.")
+    parser.add_argument("--all",           action="store_true", help="do all steps including load.")
 
     parser.add_argument("--rootfs", default="ram0", help="Location of the RootFS: ram0 or mmcblk0p2")
 
     parser.add_argument("--linux-clean",          action="store_true", help="Clean Linux Build.")
     parser.add_argument("--linux-build",          action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
+    parser.add_argument("--linux-generate-dtb",   action="store_true", help="Prepare device tree.")
     parser.add_argument("--linux-prepare-tftp",   action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
 
     args = parser.parse_args()
@@ -120,7 +122,7 @@ def main():
         cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6"
     elif args.cpu_type == "naxriscv":
         cpu_config = f"--cpu-type=naxriscv --variant=a7-100 "
-        cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu"
+        #cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu"
     else:
         print("Error: unknown cpu type")
         return
@@ -129,6 +131,8 @@ def main():
         "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --with-sdcard",
         "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
     }[args.board]
+    if args.board_variant is not None:
+        board_cmd += f" --variant={args.board_variant}"
     if args.build or args.all:
         print(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         ret = os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
@@ -141,13 +145,15 @@ def main():
         if linux_clean() != 0:
             return
 
-    if args.linux_build or args.all:
-        shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
-        # Device Tree.
-        # ------------
+    # Device Tree.
+    # ------------
+    if args.linux_generate_dtb or args.all:
         generate_dts(args.board, rootfs=args.rootfs)
         compile_dts(args.board)
         combine_dtb(args.board)
+
+    if args.linux_build or args.all:
+        shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
 
         # Buildroot.
         # ----------
