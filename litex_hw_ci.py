@@ -10,6 +10,7 @@ import time
 import enum
 import shlex
 import serial
+import argparse
 import subprocess
 
 # LiteX CI Config Constants ------------------------------------------------------------------------
@@ -67,61 +68,6 @@ class LiteXCIConfig:
 
         process.wait()
         return process.returncode
-
-# LiteX CI Config Definitions ----------------------------------------------------------------------
-
-litex_ci_configs = {
-    "trellisboard:serv" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=serv --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:femtorv-std" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=femtorv --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:firev-std" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=firev --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-min" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv --cpu-variant=minimal --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-lite" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv --cpu-variant=lite --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-std" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv --cpu-variant=standard --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-full" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv --cpu-variant=full --integrated-main-ram-size=0x100",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-std-ddr3" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv --cpu-variant=full",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-smp-1-core-ddr3" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv_smp --cpu-count=1",
-        tty     = "/dev/ttyUSB1",
-    ),
-    "trellisboard:vexriscv-smp-2-core-ddr3" : LiteXCIConfig(
-        target  = "trellisboard",
-        command = "--cpu-type=vexriscv_smp --cpu-count=2",
-        tty     = "/dev/ttyUSB1",
-    ),
-}
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
@@ -231,34 +177,48 @@ def generate_html_report(report):
 
     with open('report.html', 'w') as html_file:
         html_file.write(html_report)
+
 # LiteX CI Build/Test ------------------------------------------------------------------------------
 
-steps  = ['build', 'load', 'test']
-report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
+def main():
+    # Create an argument parser for the configuration file
+    parser = argparse.ArgumentParser(description="LiteX HW CI")
+    parser.add_argument("config", help="Path to the configuration file")
+    args = parser.parse_args()
 
-# Generate the initial HTML report
-generate_html_report(report)
+    # Import litex_ci_configs from the specified config file
+    try:
+        config_module = __import__(args.config.replace(".py", ""))
+        litex_ci_configs = config_module.litex_ci_configs
+    except ImportError:
+        print(f"Error: Configuration file '{args.config}' not found or doesn't define 'litex_ci_configs'.")
+        return
 
-for name, config in litex_ci_configs.items():
-    start_time = time.time()
-    for step in steps:
-        status = getattr(config, step)()
-        report[name][step.capitalize()] = status
-        if status != LiteXCIStatus.SUCCESS:
-            break  # Skip remaining steps if the current step fails
-    end_time = time.time()
-    duration = end_time - start_time
-    report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
-    report[name]['Duration'] = f"{duration:.2f} seconds"
+    steps = ['build', 'load', 'test']
+    report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
-    # Update the HTML report after each configuration
     generate_html_report(report)
 
-# LiteX CI Report ----------------------------------------------------------------------------------
+    for name, config in litex_ci_configs.items():
+        start_time = time.time()
+        for step in steps:
+            status = getattr(config, step)()
+            report[name][step.capitalize()] = status
+            if status != LiteXCIStatus.SUCCESS:
+                break
+        end_time = time.time()
+        duration = end_time - start_time
+        report[name]['Time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+        report[name]['Duration'] = f"{duration:.2f} seconds"
 
-print("\nLiteX CI Report:")
-step_length = max(len(step) for step in steps)
-for name, results in report.items():
-    print(f"\n{name}:")
-    for step, status in results.items():
-        print(f"  {step.ljust(step_length)}: {status.name}")
+        generate_html_report(report)
+
+    print("\nLiteX CI Report:")
+    step_length = max(len(step) for step in steps)
+    for name, results in report.items():
+        print(f"\n{name}:")
+        for step, status in results.items():
+            print(f"  {step.ljust(step_length)}: {status.name}")
+
+if __name__ == "__main__":
+    main()
