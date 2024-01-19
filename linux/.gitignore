@@ -1,0 +1,10 @@
+build
+images/Image
+images/boot.json
+*.vfat
+*.bin
+*.cpio
+*.img
+prog
+third_party
+*.dtb
