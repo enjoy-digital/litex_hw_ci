@@ -11,6 +11,7 @@ from litex_hw_ci import LiteXCIConfig
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
 litex_ci_configs = {
+    # TrellisBoard.
     "trellisboard:serv" : LiteXCIConfig(
         target  = "trellisboard",
         command = "--cpu-type=serv --integrated-main-ram-size=0x100",
@@ -61,5 +62,28 @@ litex_ci_configs = {
         command = "--cpu-type=vexriscv_smp --cpu-count=2",
         tty     = "/dev/ttyUSB1",
     ),
+    # Digilent-Arty.
+    "arty:vexriscv-all-peripherals" : LiteXCIConfig(
+        target  = "digilent_arty",
+        command = "--cpu-type=vexriscv --with-ethernet --with-sdcard --with-spiflash",
+        tty     = "/dev/ttyUSB1",
+    ),
+    "arty:naxriscv-32-all-peripherals" : LiteXCIConfig(
+        target  = "digilent_arty",
+        command = "--cpu-type=naxriscv --with-ethernet --with-sdcard --with-spiflash",
+        tty     = "/dev/ttyUSB1",
+    ),
+    # SQRL-XCU1525.
+    "xcu1525:vexriscv-all-peripherals" : LiteXCIConfig(
+        target  = "sqrl_xcu1525",
+        command = "--cpu-type=vexriscv",
+        tty     = "/dev/ttyUSB1",
+    ),
+    "xcu1525:naxriscv-32-all-peripherals" : LiteXCIConfig(
+        target  = "sqrl_xcu1525",
+        command = "--cpu-type=naxriscv",
+        tty     = "/dev/ttyUSB1",
+    ),
 }
+
 
