@@ -122,20 +122,29 @@ def generate_html_report(report, report_filename, steps):
             tr:hover {{
                 background-color: #555;
             }}
-            .BUILD_ERROR {{
+            .status {{
+                font-weight: bold;
+            }}
+            .status-BUILD_ERROR, .status-BUILD_ERROR a {{
                 color: red;
             }}
-            .LOAD_ERROR {{
+            .status-LOAD_ERROR, .status-LOAD_ERROR a {{
                 color: red;
             }}
-            .TEST_ERROR {{
+            .status-TEST_ERROR, .status-TEST_ERROR a {{
                 color: red;
             }}
-            .NOT_RUN {{
+            .status-NOT_RUN, .status-NOT_RUN a {{
                 color: orange;
             }}
-            .SUCCESS {{
+            .status-SUCCESS, .status-SUCCESS a {{
                 color: green;
+            }}
+            a.report-link {{
+                text-decoration: none; /* Remove the underline from links */
+            }}
+            a.report-link:hover {{
+                text-decoration: underline; /* Optionally, add underline on hover */
             }}
         </style>
     </head>
@@ -174,11 +183,12 @@ def generate_html_report(report, report_filename, steps):
         html_report += f"<td>{duration_value}</td>"
         for step in steps:
             status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
+            status_class = f"status-{status.name}"
             log_filename = f"build_{name}/{step}.log"
             if status != LiteXCIStatus.NOT_RUN:
-                html_report += f"<td class='{status.name}'><a href='{log_filename}' target='_blank'>{status.name}</a></td>"
+                html_report += f"<td class='{status_class}'><a href='{log_filename}' target='_blank' class='report-link {status_class}'>{status.name}</a></td>"
             else:
-                html_report += f"<td class='{status.name}'>{status.name}</td>"
+                html_report += f"<td class='{status_class}'>{status.name}</td>"
         html_report += "</tr>"
 
     html_report += """
