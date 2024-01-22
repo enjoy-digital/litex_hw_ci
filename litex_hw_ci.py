@@ -6,6 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <hello@enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
+import re
 import time
 import enum
 import shlex
@@ -32,16 +33,22 @@ class LiteXCIConfig:
         self.command        = command
         self.tty            = tty
         self.tty_baudrate   = tty_baudrate
+        self.extra_command  = ""
+
+    def set_name(self, name=""):
+        assert not hasattr(self, "name")
+        self.name = re.sub(r'[^\w-]', '_', name)
+        self.extra_command += f"--output-dir=build_{self.name}"
 
     def build(self):
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --build"):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} {self.extra_command} --build"):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def load(self):
         if self.tty == "":
             return LiteXCIStatus.LOAD_ERROR
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --load"):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} {self.extra_command} --load"):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
 
@@ -203,6 +210,7 @@ def main():
     generate_html_report(report, args.report)
 
     for name, config in litex_ci_configs.items():
+        config.set_name(name)
         start_time = time.time()
         for step in steps:
             status = getattr(config, step)()
