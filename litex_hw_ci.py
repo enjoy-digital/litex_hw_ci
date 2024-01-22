@@ -73,7 +73,7 @@ class LiteXCIConfig:
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
-def generate_html_report(report):
+def generate_html_report(report, report_filename):
     html_report = f"""
     <!DOCTYPE html>
     <html>
@@ -177,15 +177,16 @@ def generate_html_report(report):
     </html>
     """
 
-    with open('report.html', 'w') as html_file:
+    with open(report_filename, 'w') as html_file:
         html_file.write(html_report)
 
 # LiteX CI Build/Test ------------------------------------------------------------------------------
 
 def main():
-    # Create an argument parser for the configuration file
+    # Create an argument parser for the configuration file and report filename
     parser = argparse.ArgumentParser(description="LiteX HW CI")
     parser.add_argument("config", help="Path to the configuration file")
+    parser.add_argument("--report", default="report.html", help="Filename for the HTML report (default: report.html)")
     args = parser.parse_args()
 
     # Import litex_ci_configs from the specified config file
@@ -199,7 +200,7 @@ def main():
     steps = ['build', 'load', 'test']
     report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
-    generate_html_report(report)
+    generate_html_report(report, args.report)
 
     for name, config in litex_ci_configs.items():
         start_time = time.time()
@@ -213,7 +214,7 @@ def main():
         report[name]['Time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
         report[name]['Duration'] = f"{duration:.2f} seconds"
 
-        generate_html_report(report)
+        generate_html_report(report, args.report)
 
 if __name__ == "__main__":
     main()
