@@ -13,6 +13,8 @@ import shlex
 import serial
 import argparse
 import subprocess
+import os
+from pathlib import Path  # Added import for Path
 
 # LiteX CI Config Constants ------------------------------------------------------------------------
 
@@ -40,14 +42,24 @@ class LiteXCIConfig:
         self.name = name
 
     def build(self):
-        log_filename = f"build_{self.name}/build.txt"
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --build", log_filename):
+        log_dir = f"build_{self.name}"  # Modified log directory path
+        log_filename = f"{log_dir}/build.txt"
+
+        # Create the log directory if it doesn't exist
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def load(self):
-        log_filename = f"build_{self.name}/load.txt"
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --load", log_filename):
+        log_dir = f"build_{self.name}"  # Modified log directory path
+        log_filename = f"{log_dir}/load.txt"
+
+        # Create the log directory if it doesn't exist
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --load", log_filename):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
 
