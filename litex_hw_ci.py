@@ -40,13 +40,13 @@ class LiteXCIConfig:
         self.name = name
 
     def build(self):
-        log_filename = f"build_{self.name}/build.log"
+        log_filename = f"build_{self.name}/build.txt"
         if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def load(self):
-        log_filename = f"build_{self.name}/load.log"
+        log_filename = f"build_{self.name}/load.txt"
         if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --load", log_filename):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
@@ -184,7 +184,7 @@ def generate_html_report(report, report_filename, steps):
         for step in steps:
             status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
             status_class = f"status-{status.name}"
-            log_filename = f"build_{name}/{step}.log"
+            log_filename = f"build_{name}/{step}.txt"
             if status != LiteXCIStatus.NOT_RUN:
                 html_report += f"<td class='{status_class}'><a href='{log_filename}' target='_blank' class='report-link {status_class}'>{status.name}</a></td>"
             else:
