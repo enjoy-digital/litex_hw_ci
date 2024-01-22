@@ -37,18 +37,17 @@ class LiteXCIConfig:
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
-        self.name = re.sub(r'[^\w-]', '_', name)
-        self.extra_command += f"--output-dir=build_{self.name}"
+        self.name = name
 
     def build(self):
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} {self.extra_command} --build"):
+        log_filename = f"build_{self.name}/build.log"
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def load(self):
-        if self.tty == "":
-            return LiteXCIStatus.LOAD_ERROR
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} {self.extra_command} --load"):
+        log_filename = f"build_{self.name}/load.log"
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir=build_{self.name} --load", log_filename):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
 
@@ -66,21 +65,23 @@ class LiteXCIConfig:
 
     # Private.
     # --------
-    def _run(self, command):
-        process = subprocess.Popen(shlex.split(command),
-            stdout = subprocess.PIPE,
-            stderr = subprocess.STDOUT,
-            text   = True
-        )
-        for line in process.stdout:
-            print(line, end='')
+    def _run(self, command, log_filename):
+        with open(log_filename, "w") as log_file:
+            process = subprocess.Popen(shlex.split(command),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
+            for line in process.stdout:
+                print(line, end='')
+                log_file.write(line)
 
         process.wait()
         return process.returncode
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
-def generate_html_report(report, report_filename):
+def generate_html_report(report, report_filename, steps):
     html_report = f"""
     <!DOCTYPE html>
     <html>
@@ -167,14 +168,17 @@ def generate_html_report(report, report_filename):
 
     for name, results in report.items():
         html_report += f"<tr><td>{name}</td>"
-        time_value     = results.get('Time', '-')
+        time_value = results.get('Time', '-')
         duration_value = results.get('Duration', '-')
         html_report += f"<td>{time_value}</td>"
         html_report += f"<td>{duration_value}</td>"
-        for step, status in results.items():
-            if step not in ['Time', 'Duration']:
-                status_class = status.name
-                html_report += f"<td class='{status_class}'>{status.name}</td>"
+        for step in steps:
+            status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
+            log_filename = f"build_{name}/{step}.log"
+            if status != LiteXCIStatus.NOT_RUN:
+                html_report += f"<td class='{status.name}'><a href='{log_filename}' target='_blank'>{status.name}</a></td>"
+            else:
+                html_report += f"<td class='{status.name}'>{status.name}</td>"
         html_report += "</tr>"
 
     html_report += """
@@ -188,6 +192,9 @@ def generate_html_report(report, report_filename):
         html_file.write(html_report)
 
 # LiteX CI Build/Test ------------------------------------------------------------------------------
+
+def format_name(name):
+    return re.sub(r'[^\w-]', '_', name)
 
 def main():
     # Create an argument parser for the configuration file and report filename
@@ -205,11 +212,12 @@ def main():
         return
 
     steps = ['build', 'load', 'test']
-    report = {name: {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
+    report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
-    generate_html_report(report, args.report)
+    generate_html_report(report, args.report, steps)
 
     for name, config in litex_ci_configs.items():
+        name = format_name(name)
         config.set_name(name)
         start_time = time.time()
         for step in steps:
@@ -222,7 +230,7 @@ def main():
         report[name]['Time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
         report[name]['Duration'] = f"{duration:.2f} seconds"
 
-        generate_html_report(report, args.report)
+        generate_html_report(report, args.report, steps)
 
 if __name__ == "__main__":
     main()
