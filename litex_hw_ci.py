@@ -215,12 +215,5 @@ def main():
 
         generate_html_report(report)
 
-    print("\nLiteX CI Report:")
-    step_length = max(len(step) for step in steps)
-    for name, results in report.items():
-        print(f"\n{name}:")
-        for step, status in results.items():
-            print(f"  {step.ljust(step_length)}: {status.name}")
-
 if __name__ == "__main__":
     main()
