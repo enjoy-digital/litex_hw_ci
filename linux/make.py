@@ -121,8 +121,8 @@ def main():
         cpu_config = f"--cpu-type=vexriscv_smp --cpu-variant=linux "
         cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6"
     elif args.cpu_type == "naxriscv":
-        cpu_config = f"--cpu-type=naxriscv --variant=a7-100 "
-        #cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu"
+        cpu_config = f"--cpu-type=naxriscv"
+        cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu --with-rvc"
     else:
         print("Error: unknown cpu type")
         return
