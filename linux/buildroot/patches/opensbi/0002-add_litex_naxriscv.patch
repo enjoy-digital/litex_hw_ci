@@ -59,8 +59,8 @@ index 000000000..df9d88343
 +platform-runcmd = echo LiteX/NaxRiscv SMP
 +
 +PLATFORM_RISCV_XLEN = 32
-+PLATFORM_RISCV_ABI = ilp32
-+PLATFORM_RISCV_ISA = rv32ima
++PLATFORM_RISCV_ABI = ilp32d
++PLATFORM_RISCV_ISA = rv32imafd
 +PLATFORM_RISCV_CODE_MODEL = medany
 +
 +# Blobs to build
