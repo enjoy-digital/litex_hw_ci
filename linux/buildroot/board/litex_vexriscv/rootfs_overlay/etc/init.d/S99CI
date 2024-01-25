@@ -1,0 +1,34 @@
+#!/bin/sh
+#
+# Start test sequence
+#
+
+INTERFACE=eth0
+REMOTE_IP=192.168.1.100
+
+network_test() {
+	ret=0
+	# 1. test if network interface is present and UP.
+	res=$(/sbin/ifconfig $INTERFACE | grep "UP")
+	if [[ "x${res}x" == "xx" ]]; then
+		ret=1
+	else
+		ping -c 2 $REMOTE_IP > /dev/null 2>&1
+		ret=$?
+	fi
+
+	echo -n "Network Test: "
+	if [[ $ret == 0 ]]; then
+		echo "OK"
+	else
+		echo "KO"
+	fi
+	return $ret
+}
+
+case "$1" in
+	start)
+		network_test
+		;;
+	*);;
+esac
