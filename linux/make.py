@@ -23,7 +23,11 @@ def linux_clean():
         os.chdir("../../")
     return ret
 
-def linux_build():
+def linux_build(cpu_type, xlen=32):
+    # naxriscv may be configured in 32 or 64bits mode
+    if cpu_type == "naxriscv":
+        cpu_type = f"{cpu_type}_{xlen}"
+
     # Be sure third_party dir is present and switch to it.
     create_third_party_dir()
     os.chdir("third_party")
@@ -36,7 +40,7 @@ def linux_build():
     os.chdir("buildroot")
 
     # Configure Buildroot.
-    ret = os.system("make BR2_EXTERNAL=../../buildroot/ litex_vexriscv_defconfig")
+    ret = os.system(f"make BR2_EXTERNAL=../../buildroot/ litex_{cpu_type}_defconfig")
     if ret != 0:
         return ret
 
@@ -98,13 +102,15 @@ def main():
     description = "LiteX Hardware CI Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("--board",         default=None,        help="Select Board for build (digilent_arty or ti60).")
-    parser.add_argument("--board-variant", default=None,        help="Board variant")
-    parser.add_argument("--cpu-type",      default=None,        help="Select CPU to use (vexriscv or naxriscv).")
-    parser.add_argument("--baudrate",      default=115200,      help="UART Baudrate.")
-    parser.add_argument("--build",         action="store_true", help="Build SoC on selected board.")
-    parser.add_argument("--load",          action="store_true", help="Load SoC on selected board.")
-    parser.add_argument("--all",           action="store_true", help="do all steps including load.")
+    parser.add_argument("--board",         default=None,            help="Select Board for build (digilent_arty or ti60).")
+    parser.add_argument("--board-variant", default=None,            help="Board variant")
+    parser.add_argument("--cpu-type",      default=None,            help="Select CPU to use (vexriscv or naxriscv).")
+    parser.add_argument("--baudrate",      default=115200,          help="UART Baudrate.")
+    parser.add_argument("--local-ip",      default="192.168.1.50",  help="Local IP address.")
+    parser.add_argument("--remote-ip",     default="192.168.1.100", help="Remote IP address of TFTP server.")
+    parser.add_argument("--build",         action="store_true",     help="Build SoC on selected board.")
+    parser.add_argument("--load",          action="store_true",     help="Load SoC on selected board.")
+    parser.add_argument("--all",           action="store_true",     help="do all steps including load.")
 
     parser.add_argument("--rootfs", default="ram0", help="Location of the RootFS: ram0 or mmcblk0p2")
 
@@ -119,7 +125,7 @@ def main():
     # ----------
     if args.cpu_type == "vexriscv":
         cpu_config = f"--cpu-type=vexriscv_smp --cpu-variant=linux "
-        cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6"
+        cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6 --with-coherent-dma"
     elif args.cpu_type == "naxriscv":
         cpu_config = f"--cpu-type=naxriscv"
         cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu --with-rvc"
@@ -128,11 +134,14 @@ def main():
         return
     soc_config = f"--bus-bursting --uart-baudrate={int(float(args.baudrate))}"
     board_cmd  = {
-        "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --with-sdcard",
+        "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --eth-ip={args.local_ip} --remote-ip {args.remote_ip} --with-spi-sdcard --sys-clk-freq 100e6",
         "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
     }[args.board]
     if args.board_variant is not None:
-        board_cmd += f" --variant={args.board_variant}"
+        if args.board == "digilent_arty":
+            board_cmd += f" --variant={args.board_variant}"
+        else:
+            board_cmd += f" --revision={args.board_variant}"
     if args.build or args.all:
         print(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         ret = os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
@@ -157,7 +166,7 @@ def main():
 
         # Buildroot.
         # ----------
-        if linux_build() != 0:
+        if linux_build(args.cpu_type) != 0:
             return
 
     if args.linux_prepare_tftp or args.all:
