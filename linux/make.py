@@ -63,30 +63,35 @@ def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
 from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
 
 # DTS generation ---------------------------------------------------------------------------
-def generate_dts(soc_json, rootfs="ram0"):
-    dts      = os.path.join("soc.dts") # FIXME
-    initrd   = "enabled" if rootfs == "ram0" else "disabled"
 
+def generate_dts(soc_json, rootfs="ram0"):
+    base_dir = os.path.dirname(soc_json)
+    dts = os.path.join(base_dir, "soc.dts")
+    initrd = "enabled" if rootfs == "ram0" else "disabled"
     with open(soc_json) as json_file, open(dts, "w") as dts_file:
         dts_content = litex_generate_dts(json.load(json_file), initrd=initrd, polling=False, root_device=rootfs)
         dts_file.write(dts_content)
 
+
+
 # DTS compilation --------------------------------------------------------------------------
-def compile_dts(symbols=False):
-    dts = os.path.join("soc.dts") # FIXME.
-    dtb = os.path.join("soc.dtb") # FIXME.
-    subprocess.check_call(
-        "dtc {} -O dtb -o {} {}".format("-@" if symbols else "", dtb, dts), shell=True)
+
+def compile_dts(soc_json, symbols=False):
+    base_dir = os.path.dirname(soc_json)
+    dts      = os.path.join(base_dir, "soc.dts")
+    dtb      = os.path.join(base_dir, "soc.dtb")
+    subprocess.check_call(f"dtc {'-@' if symbols else ''} -O dtb -o {dtb} {dts}", shell=True)
 
 # DTB combination --------------------------------------------------------------------------
-def combine_dtb(overlays=""):
-    dtb_in  = os.path.join("soc.dtb") # FIXME.
-    dtb_out = os.path.join("images", "rv32.dtb")
+
+def combine_dtb(soc_json, overlays=""):
+    base_dir = os.path.dirname(soc_json)
+    dtb_in   = os.path.join(base_dir, "soc.dtb")
+    dtb_out  = os.path.join(base_dir, "soc_combined.dtb")
     if overlays == "":
         shutil.copyfile(dtb_in, dtb_out)
     else:
-        subprocess.check_call(
-            "fdtoverlay -i {} -o {} {}".format(dtb_in, dtb_out, overlays), shell=True)
+        subprocess.check_call(f"fdtoverlay -i {dtb_in} -o {dtb_out} {overlays}", shell=True)
 
 # Main ---------------------------------------------------------------------------------------------
 
@@ -128,8 +133,8 @@ def main():
     # ------------------
     if args.linux_generate_dtb:
         generate_dts(args.soc_json, rootfs=args.rootfs)
-        compile_dts()
-        combine_dtb()
+        compile_dts(args.soc_json)
+        combine_dtb(args.soc_json)
 
     # Linux Build.
     # ------------
