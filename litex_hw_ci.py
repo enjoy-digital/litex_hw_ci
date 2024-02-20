@@ -61,7 +61,7 @@ class LiteXCIConfig:
 
     def post_build(self):
         # FIXME: Make it optional/configurable.
-        os.system("cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --all")
+        os.system("cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb")
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
