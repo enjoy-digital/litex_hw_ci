@@ -43,18 +43,18 @@ class LiteXCIConfig:
 
     def build(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/build.txt"
+        log_filename = f"{log_dir}/build.log"
 
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --build", log_filename):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/load.txt"
+        log_filename = f"{log_dir}/load.log"
 
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
@@ -196,7 +196,7 @@ def generate_html_report(report, report_filename, steps):
         for step in steps:
             status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
             status_class = f"status-{status.name}"
-            log_filename = f"build_{name}/{step}.txt"
+            log_filename = f"build_{name}/{step}.log"
             if status != LiteXCIStatus.NOT_RUN:
                 html_report += f"<td class='{status_class}'><a href='{log_filename}' target='_blank' class='report-link {status_class}'>{status.name}</a></td>"
             else:
