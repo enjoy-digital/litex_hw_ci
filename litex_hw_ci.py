@@ -6,6 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <hello@enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
+import os
 import re
 import time
 import enum
@@ -13,7 +14,7 @@ import shlex
 import serial
 import argparse
 import subprocess
-import os
+
 from pathlib import Path  # Added import for Path
 
 # LiteX CI Config Constants ------------------------------------------------------------------------
@@ -48,9 +49,19 @@ class LiteXCIConfig:
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
+        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
+        #    return LiteXCIStatus.BUILD_ERROR
+
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
             return LiteXCIStatus.BUILD_ERROR
+
+        self.post_build()
+
         return LiteXCIStatus.SUCCESS
+
+    def post_build(self):
+        # FIXME: Make it optional/configurable.
+        os.system("cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --all")
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
