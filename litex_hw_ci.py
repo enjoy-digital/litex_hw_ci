@@ -219,19 +219,34 @@ def format_name(name):
     return re.sub(r'[^\w-]', '_', name)
 
 def main():
-    # Create an argument parser for the configuration file and report filename
     parser = argparse.ArgumentParser(description="LiteX HW CI")
-    parser.add_argument("config", help="Path to the configuration file")
-    parser.add_argument("--report", default="report.html", help="Filename for the HTML report (default: report.html)")
+    parser.add_argument("config",                          help="Path to the configuration file.")
+    parser.add_argument("--report", default="report.html", help="Filename for the HTML report (default: report.html).")
+    parser.add_argument("--name",                          help="Name of the specific configuration to execute (optional).")
+    parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
     args = parser.parse_args()
 
     # Import litex_ci_configs from the specified config file
     try:
-        config_module = __import__(args.config.replace(".py", ""))
+        config_module = __import__(args.config.replace(".py", "").replace("/", "."), fromlist=[''])
         litex_ci_configs = config_module.litex_ci_configs
-    except ImportError:
-        print(f"Error: Configuration file '{args.config}' not found or doesn't define 'litex_ci_configs'.")
+    except ImportError as e:
+        print(f"Error: {e}\nConfiguration file '{args.config}' not found or doesn't define 'litex_ci_configs'.")
         return
+
+    # If --list is specified, print the configurations and exit.
+    if args.list:
+        print("Available configurations:")
+        for name in litex_ci_configs:
+            print(f"- {name}")
+        return
+
+    # If --name is specified, only execute this configuration.
+    if args.name:
+        if args.name not in litex_ci_configs:
+            print(f"Error: Configuration '{args.name}' not found.")
+            return
+        litex_ci_configs = {args.name: litex_ci_configs[args.name]}
 
     steps = ['build', 'load', 'test']
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
@@ -256,3 +271,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
