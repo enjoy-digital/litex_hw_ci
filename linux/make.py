@@ -124,6 +124,16 @@ def main():
 
     args = parser.parse_args()
 
+    # Build.
+    # ------
+    if args.all:
+        args.build              = True
+        args.linux_clean        = True
+        args.linux_generate_dtb = True
+        args.linux_build        = True
+        args.linux_prepare_tftp = True
+        args.load               = True
+
     # SoC/Board.
     # ----------
     if args.cpu_type == "vexriscv":
@@ -154,7 +164,7 @@ def main():
 
     if args.with_usb:
         board_cmd += " --with-usb"
-    if args.build or args.all:
+    if args.build:
         print(f"python3 ${target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         ret = os.system(f"python3 {target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         if ret != 0:
@@ -162,18 +172,18 @@ def main():
 
     # Linux.
     # ------
-    if args.linux_clean or args.all:
+    if args.linux_clean:
         if linux_clean() != 0:
             return
 
     # Device Tree.
     # ------------
-    if args.linux_generate_dtb or args.all:
+    if args.linux_generate_dtb:
         generate_dts(args.board, rootfs=args.rootfs)
         compile_dts(args.board)
         combine_dtb(args.board)
 
-    if args.linux_build or args.all:
+    if args.linux_build:
         shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
 
         # Buildroot.
@@ -181,11 +191,11 @@ def main():
         if linux_build(args.cpu_type, with_usb=args.with_usb) != 0:
             return
 
-    if args.linux_prepare_tftp or args.all:
+    if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return
 
-    if args.load or args.all:
+    if args.load:
         os.system(f"python3 {target} {board_cmd} --load")
 
 if __name__ == "__main__":
