@@ -142,10 +142,7 @@ def main():
         return
     soc_config = f"--bus-bursting --uart-baudrate={int(float(args.baudrate))}"
 
-    if args.board == "digilent_arty":
-        target = "digilent_arty.py"
-    else:
-        target = f" -m litex_boards.targets.{args.board}"
+    target = f" -m litex_boards.targets.{args.board}"
 
     board_cmd  = {
         "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --eth-ip={args.local_ip} --remote-ip {args.remote_ip} --with-spi-sdcard --sys-clk-freq 100e6",
@@ -162,7 +159,7 @@ def main():
     # Build-All.
     # ----------
     if args.all:
-        #args.build              = True
+        args.build              = True
         args.linux_clean        = True
         args.linux_generate_dtb = True
         args.linux_build        = True
