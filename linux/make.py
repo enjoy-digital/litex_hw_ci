@@ -23,10 +23,12 @@ def linux_clean():
         os.chdir("../../")
     return ret
 
-def linux_build(cpu_type, xlen=32):
+def linux_build(cpu_type, xlen=32, with_usb=False):
     # naxriscv may be configured in 32 or 64bits mode
     if cpu_type == "naxriscv":
         cpu_type = f"{cpu_type}_{xlen}"
+    elif with_usb:
+        cpu_type = f"{cpu_type}_usbhost"
 
     # Be sure third_party dir is present and switch to it.
     create_third_party_dir()
@@ -105,6 +107,7 @@ def main():
     parser.add_argument("--board",         default=None,            help="Select Board for build (digilent_arty or ti60).")
     parser.add_argument("--board-variant", default=None,            help="Board variant")
     parser.add_argument("--cpu-type",      default=None,            help="Select CPU to use (vexriscv or naxriscv).")
+    parser.add_argument("--with-usb",      action="store_true",     help="Enable USB host support.")
     parser.add_argument("--baudrate",      default=115200,          help="UART Baudrate.")
     parser.add_argument("--local-ip",      default="192.168.1.50",  help="Local IP address.")
     parser.add_argument("--remote-ip",     default="192.168.1.100", help="Remote IP address of TFTP server.")
@@ -133,6 +136,12 @@ def main():
         print("Error: unknown cpu type")
         return
     soc_config = f"--bus-bursting --uart-baudrate={int(float(args.baudrate))}"
+
+    if args.board == "digilent_arty":
+        target = "digilent_arty.py"
+    else:
+        target = f" -m litex_boards.targets.{args.board}"
+
     board_cmd  = {
         "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --eth-ip={args.local_ip} --remote-ip {args.remote_ip} --with-spi-sdcard --sys-clk-freq 100e6",
         "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
@@ -142,9 +151,12 @@ def main():
             board_cmd += f" --variant={args.board_variant}"
         else:
             board_cmd += f" --revision={args.board_variant}"
+
+    if args.with_usb:
+        board_cmd += " --with-usb"
     if args.build or args.all:
-        print(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
-        ret = os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
+        print(f"python3 ${target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
+        ret = os.system(f"python3 {target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         if ret != 0:
             return
 
@@ -166,7 +178,7 @@ def main():
 
         # Buildroot.
         # ----------
-        if linux_build(args.cpu_type) != 0:
+        if linux_build(args.cpu_type, with_usb=args.with_usb) != 0:
             return
 
     if args.linux_prepare_tftp or args.all:
@@ -174,7 +186,7 @@ def main():
             return
 
     if args.load or args.all:
-        os.system(f"python3 -m litex_boards.targets.{args.board} {board_cmd} --load")
+        os.system(f"python3 {target} {board_cmd} --load")
 
 if __name__ == "__main__":
     main()
