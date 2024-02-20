@@ -63,12 +63,11 @@ def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
 from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
 
 # DTS generation ---------------------------------------------------------------------------
-def generate_dts(board_name, rootfs="ram0"):
-    json_src = os.path.join("build", board_name, "soc.json")
-    dts = os.path.join("build", board_name, "{}.dts".format(board_name))
+def generate_dts(soc_json, rootfs="ram0"):
+    dts      = os.path.join("soc.dts") # FIXME
     initrd   = "enabled" if rootfs == "ram0" else "disabled"
 
-    with open(json_src) as json_file, open(dts, "w") as dts_file:
+    with open(soc_json) as json_file, open(dts, "w") as dts_file:
         dts_content = litex_generate_dts(json.load(json_file), initrd=initrd, polling=False, root_device=rootfs)
         dts_file.write(dts_content)
 
@@ -105,16 +104,9 @@ def main():
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
     # SoC/Board.
-    parser.add_argument("--board",                default=None,            help="Select Board for build (digilent_arty or ti60).")
-    parser.add_argument("--board-variant",        default=None,            help="Select Board variant.")
+    parser.add_argument("--soc-json",                                      help="SoC JSON file.")
     parser.add_argument("--cpu-type",             default=None,            help="Select CPU (vexriscv or naxriscv).")
     parser.add_argument("--with-usb",             action="store_true",     help="Enable USB-Host.")
-    parser.add_argument("--baudrate",             default=115200,          help="Configure UART Baudrate.")
-    parser.add_argument("--local-ip",             default="192.168.1.50",  help="Set Local IP address.")
-    parser.add_argument("--remote-ip",            default="192.168.1.100", help="Set Remote IP address of TFTP server.")
-    parser.add_argument("--build",                action="store_true",     help="Build SoC on selected board.")
-    parser.add_argument("--load",                 action="store_true",     help="Load SoC on selected board.")
-
     # RootFS.
     parser.add_argument("--rootfs",               default="ram0",          help="Location of the RootFS: ram0 or mmcblk0p2")
 
@@ -125,54 +117,17 @@ def main():
     parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
 
     # General.
-    parser.add_argument("--all",                  action="store_true",     help="Build SoC/Linux and load Board.")
+    parser.add_argument("--all",                  action="store_true",     help="Execute all build steps.")
 
     args = parser.parse_args()
-
-    # SoC/Board Configuration.
-    # ------------------------
-    if args.cpu_type == "vexriscv":
-        cpu_config = f"--cpu-type=vexriscv_smp --cpu-variant=linux "
-        cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6 --with-coherent-dma"
-    elif args.cpu_type == "naxriscv":
-        cpu_config = f"--cpu-type=naxriscv"
-        cpu_config += f"--scala-args='rvc=true,rvf=true,rvd=true' --with-fpu --with-rvc"
-    else:
-        print("Error: unknown cpu type")
-        return
-    soc_config = f"--bus-bursting --uart-baudrate={int(float(args.baudrate))}"
-
-    target = f" -m litex_boards.targets.{args.board}"
-
-    board_cmd  = {
-        "digilent_arty": f"{cpu_config} {soc_config} --with-ethernet --eth-ip={args.local_ip} --remote-ip {args.remote_ip} --with-spi-sdcard --sys-clk-freq 100e6",
-        "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
-    }[args.board]
-    if args.board_variant is not None:
-        if board == "digilent_arty":
-            board_cmd += f" --variant={args.board_variant}"
-        else:
-            board_cmd += f" --revision={args.board_variant}"
-    if args.with_usb:
-        board_cmd += " --with-usb"
 
     # Build-All.
     # ----------
     if args.all:
-        args.build              = True
-        args.linux_clean        = True
+        #args.linux_clean        = True
         args.linux_generate_dtb = True
         args.linux_build        = True
         args.linux_prepare_tftp = True
-        args.load               = True
-
-    # SoC/Board Build.
-    # ----------------
-    if args.build:
-        print(f"python3 ${target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
-        ret = os.system(f"python3 {target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
-        if ret != 0:
-            return
 
     # Linux Clean.
     # ------------
@@ -183,9 +138,9 @@ def main():
     # Device Tree Build.
     # ------------------
     if args.linux_generate_dtb:
-        generate_dts(args.board, rootfs=args.rootfs)
-        compile_dts(args.board)
-        combine_dtb(args.board)
+        generate_dts(args.soc_json, rootfs=args.rootfs)
+        #compile_dts(args.board)
+        #combine_dtb(args.board)
 
     # Linux Build.
     # ------------
@@ -199,11 +154,6 @@ def main():
     if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return
-
-    # SoC/Board Load.
-    # ---------------
-    if args.load:
-        os.system(f"python3 {target} {board_cmd} --load")
 
 if __name__ == "__main__":
     main()
