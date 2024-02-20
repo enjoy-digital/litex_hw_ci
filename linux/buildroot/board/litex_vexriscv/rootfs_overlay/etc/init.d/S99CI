@@ -7,7 +7,8 @@ INTERFACE=eth0
 REMOTE_IP=192.168.1.100
 
 MMC_DEV=/dev/mmcblk0p1
-MMC_MNT=/mnt
+USB_DEV=/dev/sda1
+MOUNT_POINT=/mnt
 
 network_test() {
 	ret=0
@@ -29,29 +30,36 @@ network_test() {
 	return $ret
 }
 
-sdcard_test() {
+storage_test() {
+	DEVICE=$1
+	MOUNT_POINT=$2
 	ret=0
+
 	# 1. test if mmc is present.
-	res=$(ls $MMC_DEV 2>/dev/null)
-	if [ ! -e $MMC_DEV ]; then
-		echo "MMC Test: KO"
+	if [ ! -e $DEVICE ]; then
 		return 1
 	fi
 
 	# 2. try to mount device
-	mount $MMC_DEV $MMC_MNT > /dev/null 2>&1
+	mount $DEVICE $MOUNT_POINT > /dev/null 2>&1
 	ret=$?
 	if [[ $ret == 0 ]]; then
 		# 3. try to read and compare file content
 		ret=1
-		content=$(cat $MMC_MNT/litex_ci.txt)
+		content=$(cat $MOUNT_POINT/litex_ci.txt)
 		if [[ "$content" == "Hello World" ]]; then
 			ret=0
 		fi
 
-		umount $MMC_MNT > /dev/null 2>&1
+		umount $MOUNT_POINT > /dev/null 2>&1
 	fi
 
+	return $ret
+}
+
+sdcard_test() {
+	storage_test $MMC_DEV $MOUNT_POINT
+	ret=$?
 	echo -n "MMC Test: "
 	if [[ $ret == 0 ]]; then
 		echo "OK"
@@ -62,11 +70,25 @@ sdcard_test() {
 	return $ret
 }
 
+usbhost_test() {
+	storage_test $USB_DEV $MOUNT_POINT
+	ret=$?
+	echo -n "USB Test: "
+	if [[ $ret == 0 ]]; then
+		echo "OK"
+	else
+		echo "KO"
+	fi
+
+	return $ret
+}
 
 case "$1" in
 	start)
 		network_test
 		sdcard_test
+		usbhost_test
 		;;
 	*);;
 esac
+
