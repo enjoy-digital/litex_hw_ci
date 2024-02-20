@@ -105,8 +105,8 @@ def main():
 
     # SoC/Board.
     parser.add_argument("--soc-json",                                      help="SoC JSON file.")
-    parser.add_argument("--cpu-type",             default=None,            help="Select CPU (vexriscv or naxriscv).")
-    parser.add_argument("--with-usb",             action="store_true",     help="Enable USB-Host.")
+    parser.add_argument("--cpu-type",             default=None,            help="Select CPU (vexriscv or naxriscv).") # FIXME: Remove, can be found in .json.
+    parser.add_argument("--with-usb",             action="store_true",     help="Enable USB-Host.")                   # FIXME: Remove, can be found in .json.
     # RootFS.
     parser.add_argument("--rootfs",               default="ram0",          help="Location of the RootFS: ram0 or mmcblk0p2")
 
@@ -116,18 +116,7 @@ def main():
     parser.add_argument("--linux-generate-dtb",   action="store_true",     help="Prepare device tree.")
     parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
 
-    # General.
-    parser.add_argument("--all",                  action="store_true",     help="Execute all build steps.")
-
     args = parser.parse_args()
-
-    # Build-All.
-    # ----------
-    if args.all:
-        #args.linux_clean        = True
-        args.linux_generate_dtb = True
-        args.linux_build        = True
-        args.linux_prepare_tftp = True
 
     # Linux Clean.
     # ------------
