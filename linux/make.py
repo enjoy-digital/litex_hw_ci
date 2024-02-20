@@ -72,15 +72,15 @@ def generate_dts(soc_json, rootfs="ram0"):
         dts_file.write(dts_content)
 
 # DTS compilation --------------------------------------------------------------------------
-def compile_dts(board_name, symbols=False):
-    dts = os.path.join("build", board_name, "{}.dts".format(board_name))
-    dtb = os.path.join("build", board_name, "{}.dtb".format(board_name))
+def compile_dts(symbols=False):
+    dts = os.path.join("soc.dts") # FIXME.
+    dtb = os.path.join("soc.dtb") # FIXME.
     subprocess.check_call(
         "dtc {} -O dtb -o {} {}".format("-@" if symbols else "", dtb, dts), shell=True)
 
 # DTB combination --------------------------------------------------------------------------
-def combine_dtb(board_name, overlays=""):
-    dtb_in = os.path.join("build", board_name, "{}.dtb".format(board_name))
+def combine_dtb(overlays=""):
+    dtb_in  = os.path.join("soc.dtb") # FIXME.
     dtb_out = os.path.join("images", "rv32.dtb")
     if overlays == "":
         shutil.copyfile(dtb_in, dtb_out)
@@ -128,8 +128,8 @@ def main():
     # ------------------
     if args.linux_generate_dtb:
         generate_dts(args.soc_json, rootfs=args.rootfs)
-        #compile_dts(args.board)
-        #combine_dtb(args.board)
+        compile_dts()
+        combine_dtb()
 
     # Linux Build.
     # ------------
