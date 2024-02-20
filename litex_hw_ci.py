@@ -31,12 +31,13 @@ class LiteXCIStatus(enum.IntEnum):
 class LiteXCIConfig:
     # Public.
     # -------
-    def __init__(self, target="", command="", tty="", tty_baudrate=115200):
-        self.target         = target
-        self.command        = command
-        self.tty            = tty
-        self.tty_baudrate   = tty_baudrate
-        self.extra_command  = ""
+    def __init__(self, target="", command="", post_command="", tty="", tty_baudrate=115200):
+        self.target        = target
+        self.command       = command
+        self.post_command  = post_command
+        self.tty           = tty
+        self.tty_baudrate  = tty_baudrate
+        self.extra_command = ""
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
@@ -55,13 +56,11 @@ class LiteXCIConfig:
         if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
             return LiteXCIStatus.BUILD_ERROR
 
-        self.post_build()
-
         return LiteXCIStatus.SUCCESS
 
-    def post_build(self):
-        # FIXME: Make it optional/configurable.
-        os.system("cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb")
+    def post(self): # FIXME: Rename
+        os.system(self.post_command)
+        return LiteXCIStatus.SUCCESS
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
@@ -259,7 +258,7 @@ def main():
             return
         litex_ci_configs = {args.name: litex_ci_configs[args.name]}
 
-    steps = ['build', 'load', 'test']
+    steps = ['build', 'post', 'load', 'test']
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     generate_html_report(report, args.report, steps)

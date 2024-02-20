@@ -36,6 +36,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.100 \
         --with-spi-sdcard \
         --with-usb",
+        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb",
         #tty     = "/dev/ttyUSB1",
     ),
     # Digilent Arty running VexRiscv-SMP with:
