@@ -93,49 +93,44 @@ def combine_dtb(board_name, overlays=""):
 
 def main():
     print("""
-              __   _ __      _  __
-             / /  (_) /____ | |/_/
-            / /__/ / __/ -_)>  <
-           /____/_/\\__/\\__/_/|_|
-           LiteX Hardware CI Tests.
+                                    __   _ __      _  __
+                                   / /  (_) /____ | |/_/
+                                  / /__/ / __/ -_)>  <
+                                 /____/_/\\__/\\__/_/|_|
+                              LiteX Hardware CI/Linux Tests.
 
-        Copyright 2024 / Enjoy-Digital and LiteX developers.
+                      Copyright 2024 / Enjoy-Digital and LiteX developers.
 """)
     description = "LiteX Hardware CI Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("--board",         default=None,            help="Select Board for build (digilent_arty or ti60).")
-    parser.add_argument("--board-variant", default=None,            help="Board variant")
-    parser.add_argument("--cpu-type",      default=None,            help="Select CPU to use (vexriscv or naxriscv).")
-    parser.add_argument("--with-usb",      action="store_true",     help="Enable USB host support.")
-    parser.add_argument("--baudrate",      default=115200,          help="UART Baudrate.")
-    parser.add_argument("--local-ip",      default="192.168.1.50",  help="Local IP address.")
-    parser.add_argument("--remote-ip",     default="192.168.1.100", help="Remote IP address of TFTP server.")
-    parser.add_argument("--build",         action="store_true",     help="Build SoC on selected board.")
-    parser.add_argument("--load",          action="store_true",     help="Load SoC on selected board.")
-    parser.add_argument("--all",           action="store_true",     help="do all steps including load.")
+    # SoC/Board.
+    parser.add_argument("--board",                default=None,            help="Select Board for build (digilent_arty or ti60).")
+    parser.add_argument("--board-variant",        default=None,            help="Select Board variant.")
+    parser.add_argument("--cpu-type",             default=None,            help="Select CPU (vexriscv or naxriscv).")
+    parser.add_argument("--with-usb",             action="store_true",     help="Enable USB-Host.")
+    parser.add_argument("--baudrate",             default=115200,          help="Configure UART Baudrate.")
+    parser.add_argument("--local-ip",             default="192.168.1.50",  help="Set Local IP address.")
+    parser.add_argument("--remote-ip",            default="192.168.1.100", help="Set Remote IP address of TFTP server.")
+    parser.add_argument("--build",                action="store_true",     help="Build SoC on selected board.")
+    parser.add_argument("--load",                 action="store_true",     help="Load SoC on selected board.")
 
-    parser.add_argument("--rootfs", default="ram0", help="Location of the RootFS: ram0 or mmcblk0p2")
+    # RootFS.
+    parser.add_argument("--rootfs",               default="ram0",          help="Location of the RootFS: ram0 or mmcblk0p2")
 
-    parser.add_argument("--linux-clean",          action="store_true", help="Clean Linux Build.")
-    parser.add_argument("--linux-build",          action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
-    parser.add_argument("--linux-generate-dtb",   action="store_true", help="Prepare device tree.")
-    parser.add_argument("--linux-prepare-tftp",   action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
+    # Linux.
+    parser.add_argument("--linux-clean",          action="store_true",     help="Clean Linux Build.")
+    parser.add_argument("--linux-build",          action="store_true",     help="Build Linux Images (through Buildroot) and Device Tree.")
+    parser.add_argument("--linux-generate-dtb",   action="store_true",     help="Prepare device tree.")
+    parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
+
+    # General.
+    parser.add_argument("--all",                  action="store_true",     help="Build SoC/Linux and load Board.")
 
     args = parser.parse_args()
 
-    # Build.
-    # ------
-    if args.all:
-        args.build              = True
-        args.linux_clean        = True
-        args.linux_generate_dtb = True
-        args.linux_build        = True
-        args.linux_prepare_tftp = True
-        args.load               = True
-
-    # SoC/Board.
-    # ----------
+    # SoC/Board Configuration.
+    # ------------------------
     if args.cpu_type == "vexriscv":
         cpu_config = f"--cpu-type=vexriscv_smp --cpu-variant=linux "
         cpu_config += "--dcache-width=64 --dcache-size=8192 --dcache-ways=2 --icache-width=64 --icache-size=8192 --icache-ways=2 --dtlb-size=6 --with-coherent-dma"
@@ -157,44 +152,59 @@ def main():
         "ti60": f"{cpu_config} {soc_config} --with-wishbone-memory --sys-clk-freq=260e6 --with-hyperram --with-sdcard",
     }[args.board]
     if args.board_variant is not None:
-        if args.board == "digilent_arty":
+        if board == "digilent_arty":
             board_cmd += f" --variant={args.board_variant}"
         else:
             board_cmd += f" --revision={args.board_variant}"
-
     if args.with_usb:
         board_cmd += " --with-usb"
+
+    # Build-All.
+    # ----------
+    if args.all:
+        #args.build              = True
+        args.linux_clean        = True
+        args.linux_generate_dtb = True
+        args.linux_build        = True
+        args.linux_prepare_tftp = True
+        args.load               = True
+
+    # SoC/Board Build.
+    # ----------------
     if args.build:
         print(f"python3 ${target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         ret = os.system(f"python3 {target} {board_cmd} --csr-json=build/{args.board}/soc.json --build")
         if ret != 0:
             return
 
-    # Linux.
-    # ------
+    # Linux Clean.
+    # ------------
     if args.linux_clean:
         if linux_clean() != 0:
             return
 
-    # Device Tree.
-    # ------------
+    # Device Tree Build.
+    # ------------------
     if args.linux_generate_dtb:
         generate_dts(args.board, rootfs=args.rootfs)
         compile_dts(args.board)
         combine_dtb(args.board)
 
+    # Linux Build.
+    # ------------
     if args.linux_build:
         shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
-
-        # Buildroot.
-        # ----------
         if linux_build(args.cpu_type, with_usb=args.with_usb) != 0:
             return
 
+    # TFTP-Prepare.
+    # -------------
     if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return
 
+    # SoC/Board Load.
+    # ---------------
     if args.load:
         os.system(f"python3 {target} {board_cmd} --load")
 
