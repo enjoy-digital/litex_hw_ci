@@ -13,12 +13,14 @@ from litex_hw_ci import LiteXCIConfig
 litex_ci_configs = {
     "arty:vexriscv-linux" : LiteXCIConfig(
         target  = "digilent_arty",
-        command = "--sys-clk-freq 100e6 --cpu-type=vexriscv_smp --cpu-variant=linux \
+        command = "--sys-clk-freq 100e6 \
+        --cpu-type=vexriscv_smp --cpu-variant=linux \
         --dcache-width=64 --dcache-size=8192 --dcache-ways=2 \
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
-        --with-ethernet \
-        --with-spi-sdcard",
+        --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.100 \
+        --with-spi-sdcard \
+        --with-usb",
         #tty     = "/dev/ttyUSB1",
     ),
 }
