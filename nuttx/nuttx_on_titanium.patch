@@ -1,0 +1,65 @@
+diff --git a/arch/risc-v/src/litex/litex_emac.c b/arch/risc-v/src/litex/litex_emac.c
+index 1a1fcd15cf..d9cd1cb195 100644
+--- a/arch/risc-v/src/litex/litex_emac.c
++++ b/arch/risc-v/src/litex/litex_emac.c
+@@ -107,6 +107,7 @@
+ 
+ #if defined(CONFIG_ETH0_PHY_DP83848C)
+ #  define BOARD_PHY_NAME        "DP83848C"
++#if 0
+ #  define BOARD_PHYID1          MII_PHYID1_DP83848C
+ #  define BOARD_PHYID2          MII_PHYID2_DP83848C
+ #  define BOARD_PHY_STATUS      MII_DP83848C_STS
+@@ -114,6 +115,14 @@
+ #  define BOARD_PHY_100BASET(s) (((s) & MII_DP83848C_PHYSTS_SPEED) == 0)
+ #  define BOARD_PHY_ISDUPLEX(s) (((s) & MII_DP83848C_PHYSTS_DUPLEX) != 0)
+ #else
++#  define BOARD_PHYID1          0x001c
++#  define BOARD_PHYID2          0xc916
++#  define BOARD_PHY_STATUS      0x11
++#  define BOARD_PHY_10BASET(s)  (((s) & MII_DP83848C_PHYSTS_SPEED) != 0)
++#  define BOARD_PHY_100BASET(s) (((s) & MII_DP83848C_PHYSTS_SPEED) == 0)
++#  define BOARD_PHY_ISDUPLEX(s) (((s) & (1 << 13)) != 0)
++#endif
++#else
+ #  error EMAC PHY unrecognized
+ #endif
+ 
+@@ -1111,10 +1120,12 @@ static void litex_phydump(struct litex_emac_s *priv)
+   litex_phyread(priv, priv->phyaddr, BOARD_PHY_STATUS, &phyval);
+   ninfo("  PHYSR:     %04x\n", phyval);
+ 
++#if 0
+   if (phyval == 0xffff)
+     {
+       return;
+     }
++#endif
+ 
+   if (BOARD_PHY_ISDUPLEX(phyval))
+     {
+diff --git a/boards/risc-v/litex/arty_a7/configs/netnsh/defconfig b/boards/risc-v/litex/arty_a7/configs/netnsh/defconfig
+index cd927dad14..82a40f0f0e 100644
+--- a/boards/risc-v/litex/arty_a7/configs/netnsh/defconfig
++++ b/boards/risc-v/litex/arty_a7/configs/netnsh/defconfig
+@@ -17,7 +17,12 @@ CONFIG_ARCH_RISCV=y
+ CONFIG_ARCH_STACKDUMP=y
+ CONFIG_BOARD_LOOPSPERMSEC=10000
+ CONFIG_BUILTIN=y
++CONFIG_DEBUG_FEATURES=y
+ CONFIG_DEBUG_FULLOPT=y
++CONFIG_DEBUG_NET=y
++CONFIG_DEBUG_NET_ERROR=y
++CONFIG_DEBUG_NET_INFO=y
++CONFIG_DEBUG_NET_WARN=y
+ CONFIG_DEBUG_SYMBOLS=y
+ CONFIG_DEV_ZERO=y
+ CONFIG_ETH0_PHY_DP83848C=y
+@@ -31,6 +36,7 @@ CONFIG_INTELHEX_BINARY=y
+ CONFIG_LIBC_HOSTNAME="arty-a7"
+ CONFIG_LIBC_PERROR_STDOUT=y
+ CONFIG_LIBC_STRERROR=y
++CONFIG_LITEX_EMAC_PHYADDR=0
+ CONFIG_LITEX_ETHMAC=y
+ CONFIG_NETDEV_PHY_IOCTL=y
+ CONFIG_NETDEV_STATISTICS=y
