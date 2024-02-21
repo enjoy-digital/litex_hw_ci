@@ -14,127 +14,89 @@ import shlex
 import serial
 import argparse
 import subprocess
+from pathlib import Path
 
-from pathlib import Path  # Added import for Path
-
-# LiteX CI Config Constants ------------------------------------------------------------------------
+# LiteX CI Config Constants
 
 class LiteXCIStatus(enum.IntEnum):
-    SUCCESS     = 0
+    SUCCESS = 0
     BUILD_ERROR = 1
-    LOAD_ERROR  = 2
-    TEST_ERROR  = 3
-    NOT_RUN     = 4
+    LOAD_ERROR = 2
+    TEST_ERROR = 3
+    NOT_RUN = 4
 
-# LiteX CI Config ----------------------------------------------------------------------------------
+# Utility Functions
+
+def execute_command(command, log_path):
+    with open(log_path, "w") as log_file:
+        process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        for line in process.stdout:
+            print(line, end='')
+            log_file.write(line)
+    return process.wait() == 0
+
+def prepare_directory(name):
+    log_dir = Path(f"build_{name}")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir
+
+# LiteX CI Config
 
 class LiteXCIConfig:
-    # Public.
-    # -------
     def __init__(self, target="", gateware_command="", software_command="", tty="", tty_baudrate=115200, test_checks=["Memtest OK"], test_timeout=5.0):
-        self.target           = target
+        self.target = target
         self.gateware_command = gateware_command
         self.software_command = software_command
-        self.tty              = tty
-        self.tty_baudrate     = tty_baudrate
-        self.test_checks      = test_checks
-        self.test_timeout     = test_timeout
-        self.extra_command    = ""
+        self.tty = tty
+        self.tty_baudrate = tty_baudrate
+        self.test_checks = test_checks
+        self.test_timeout = test_timeout
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
         self.name = name
 
+    def perform_step(self, step_name, command, log_filename_suffix):
+        log_dir = prepare_directory(self.name)
+        log_path = log_dir / f"{log_filename_suffix}.rpt"
+        if execute_command(command, log_path):
+            return LiteXCIStatus.SUCCESS
+        return getattr(LiteXCIStatus, f"{step_name.upper()}_ERROR")
+
     def gateware_build(self):
-        log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/gateware_build.rpt"
-
-        # Create the log directory if it doesn't exist
-        Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
-            return LiteXCIStatus.BUILD_ERROR
-        return LiteXCIStatus.SUCCESS
+        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir=build_{self.name} --soc-json=build_{self.name}/soc.json --build"
+        return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
         if self.software_command == "":
             return LiteXCIStatus.NOT_RUN
-        else:
-            log_dir = f"build_{self.name}"  # Modified log directory path
-            log_filename = f"{log_dir}/software_build.rpt"
-
-            # Create the log directory if it doesn't exist
-            Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-            os.chdir("linux") # FIXME.
-            if self._run(self.software_command, "../" + log_filename): # FIXME.
-                os.chdir("..")  # FIXME.
-                return LiteXCIStatus.BUILD_ERROR
-            os.chdir("..")  # FIXME.
-            return LiteXCIStatus.SUCCESS
+        command = self.software_command
+        return self.perform_step("build", command, "software_build")
 
     def load(self):
-        log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/load.rpt"
-
-        # Create the log directory if it doesn't exist
-        Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --load", log_filename):
-            return LiteXCIStatus.LOAD_ERROR
-        return LiteXCIStatus.SUCCESS
+        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir=build_{self.name} --load"
+        return self.perform_step("load", command, "load")
 
     def test(self, send="reboot\n"):
-        log_dir = f"build_{self.name}"  # Use the modified log directory path.
-        log_filename = f"{log_dir}/test.rpt"
-
-        # Ensure the log directory exists.
-        Path(log_dir).mkdir(parents=True, exist_ok=True)
-
-        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_filename, "w") as log_file:
-            for cmd in send:
-                ser.write(bytes(cmd, "utf-8"))
-                log_file.write(cmd)  # Log the command sent to the device.
-
+        log_dir = prepare_directory(self.name)
+        log_path = log_dir / "test.rpt"
+        status = LiteXCIStatus.TEST_ERROR
+        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_path, "w") as log_file:
+            ser.write(bytes(send, "utf-8"))
+            log_file.write(send)
             start_time = time.time()
-            current_check_index = 0  # Start with the first check in the list.
-            accumulated_data = ""  # Accumulate data to check for ordered strings.
-            while (time.time() - start_time) < self.test_timeout:
-                data = ser.read(256)
-                if not data:
-                    continue  # Skip empty data reads.
+            accumulated_data = ""
+            while time.time() - start_time < self.test_timeout:
+                data = ser.read(256).decode('utf-8', errors='replace')
+                if data:
+                    print(data, end='', flush=True)
+                    log_file.write(data)
+                    accumulated_data += data
+                    if all(check in accumulated_data for check in self.test_checks):
+                        status = LiteXCIStatus.SUCCESS
+                        break
+        return status
 
-                decoded_data = data.decode('utf-8', errors='replace')
-                print(decoded_data, end='', flush=True)
-                log_file.write(decoded_data)  # Log the data received from the device.
-                accumulated_data += decoded_data
-
-                # Check if the current part of the test_checks list is in the accumulated data.
-                if self.test_checks[current_check_index] in accumulated_data:
-                    current_check_index += 1  # Move to the next check.
-                    if current_check_index >= len(self.test_checks):
-                        return LiteXCIStatus.SUCCESS  # All checks have been found in order.
-                    # Reset accumulated data to start checking for the next string.
-                    accumulated_data = ""
-
-            return LiteXCIStatus.TEST_ERROR
-
-    # Private.
-    # --------
-    def _run(self, command, log_filename):
-        with open(log_filename, "w") as log_file:
-            process = subprocess.Popen(shlex.split(command),
-                stdout = subprocess.PIPE,
-                stderr = subprocess.STDOUT,
-                text   = True
-            )
-            for line in process.stdout:
-                print(line, end='')
-                log_file.write(line)
-
-        process.wait()
-        return process.returncode
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
