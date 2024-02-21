@@ -50,12 +50,9 @@ class LiteXCIConfig:
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
-        #    return LiteXCIStatus.BUILD_ERROR
-
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
+        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
-
         return LiteXCIStatus.SUCCESS
 
     def post(self): # FIXME: Rename
@@ -74,6 +71,8 @@ class LiteXCIConfig:
         return LiteXCIStatus.SUCCESS
 
     def test(self, send="reboot\n", check="Memtest OK", timeout=5.0):
+        check   = "Welcome to Buildroot" # FIXME: For Linux test.
+        timeout = 60                     # FIXME: For Linux test.
         with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser:
                 for cmd in send:
                     ser.write(bytes(cmd, "utf-8"))

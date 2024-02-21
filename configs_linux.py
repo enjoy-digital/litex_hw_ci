@@ -24,8 +24,8 @@ litex_ci_configs = {
     # - 8KB DCache (2-Ways).
     # - Coherent DMA.
     # - Ethernet 100Mbps.
-    # - SPI-SDCard.
-    # - USB-Host.
+    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
+    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
     "arty:vexriscv-linux-1-core" : LiteXCIConfig(
         target  = "digilent_arty",
         command = "--sys-clk-freq 100e6 \
@@ -33,11 +33,11 @@ litex_ci_configs = {
         --dcache-width=64 --dcache-size=8192 --dcache-ways=2 \
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
-        --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.100 \
+        --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.121 \
         --with-spi-sdcard \
         --with-usb",
-        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb",
-        #tty     = "/dev/ttyUSB1",
+        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        tty = "/dev/ttyUSB1",
     ),
     # Digilent Arty running VexRiscv-SMP with:
     # - 2 Cores.
@@ -45,27 +45,28 @@ litex_ci_configs = {
     # - 8KB DCache (2-Ways).
     # - Coherent DMA.
     # - Ethernet 100Mbps.
-    # - SPI-SDCard.
-    # - USB-Host.
+    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
+    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
     "arty:vexriscv-linux-2-core" : LiteXCIConfig(
         target  = "digilent_arty",
         command = "--sys-clk-freq 100e6 \
-        --cpu-type=vexriscv_smp --cpu-count=1 --cpu-variant=linux \
+        --cpu-type=vexriscv_smp --cpu-count=2 --cpu-variant=linux \
         --dcache-width=64 --dcache-size=8192 --dcache-ways=2 \
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
         --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.100 \
         --with-spi-sdcard \
         --with-usb",
-        #tty     = "/dev/ttyUSB1",
+        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        tty     = "/dev/ttyUSB1",
     ),
     # Digilent Arty running NaxRiscv 32-bit with:
     # - 1 Core.
     # - Ethernet 100Mbps.
     # - Coherent DMA.
     # - Ethernet 100Mbps.
-    # - SPI-SDCard.
-    # - USB-Host.
+    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
+    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
     "arty:naxriscv-linux-32-bit" : LiteXCIConfig(
         target  = "digilent_arty",
         command = "--sys-clk-freq 100e6 \
@@ -73,6 +74,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip=192.168.1.50 --remote-ip=192.168.1.100 \
         --with-spi-sdcard \
         --with-usb",
-        #tty     = "/dev/ttyUSB1",
+        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_naxriscv-linux-32-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        tty     = "/dev/ttyUSB1",
     ),
 }
