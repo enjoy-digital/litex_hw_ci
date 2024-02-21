@@ -101,125 +101,123 @@ class LiteXCIConfig:
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
 def generate_html_report(report, report_filename, steps):
-    html_report = f"""
+    html_content = f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>LiteX CI Report</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
         <style>
             body {{
-                font-family: Arial, Helvetica, sans-serif;
-                background-color: #222;
-                color: #fff;
+                font-family: 'Inter', sans-serif;
+                background-color: #121212;
+                color: #e0e0e0;
                 margin: 0;
-                padding: 0;
-            }}
-            .container {{
-                max-width: 800px;
-                margin: 0 auto;
                 padding: 20px;
             }}
+            .container {{
+                max-width: 960px;
+                margin: 20px auto;
+                background: #1e1e1e;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                padding: 20px;
+                border-radius: 8px;
+            }}
             h1 {{
+                color: #e0e0e0;
                 font-size: 24px;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
-                background-color: #333;
                 margin-top: 20px;
             }}
             th, td {{
                 text-align: left;
                 padding: 12px 15px;
-                border-bottom: 1px solid #444;
-                white-space: nowrap;
+                border: 1px solid #333;
             }}
             th {{
-                background-color: #444;
-                color: #fff;
+                background-color: #2c2c2c;
+                color: #ffffff;
             }}
-            tr:hover {{
-                background-color: #555;
+            tr:nth-child(even) {{
+                background-color: #262626;
             }}
             .status {{
                 font-weight: bold;
             }}
-            .status-BUILD_ERROR, .status-BUILD_ERROR a {{
-                color: red;
+            .status-SUCCESS {{
+                color: #4CAF50; /* Green for success */
             }}
-            .status-LOAD_ERROR, .status-LOAD_ERROR a {{
-                color: red;
+            .status-BUILD_ERROR, .status-LOAD_ERROR, .status-TEST_ERROR {{
+                color: #F44336; /* Red for errors */
             }}
-            .status-TEST_ERROR, .status-TEST_ERROR a {{
-                color: red;
+            .status-NOT_RUN {{
+                color: #FF9800; /* Orange for not run */
             }}
-            .status-NOT_RUN, .status-NOT_RUN a {{
-                color: orange;
+            a {{
+                color: #76B900; /* Adjusted for visibility in dark mode */
+                text-decoration: none;
             }}
-            .status-SUCCESS, .status-SUCCESS a {{
-                color: green;
-            }}
-            a.report-link {{
-                text-decoration: none; /* Remove the underline from links */
-            }}
-            a.report-link:hover {{
-                text-decoration: underline; /* Optionally, add underline on hover */
+            a:hover {{
+                text-decoration: underline;
             }}
         </style>
     </head>
     <body>
         <div class="container">
             <h1>LiteX CI Report</h1>
-    """
-
-    tests_executed = sum(1 for results in report.values() if any(status != LiteXCIStatus.NOT_RUN for status in results.values()))
-    total_seconds = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
-
-    # Convert total_seconds to hours, minutes, and seconds
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    # Add the summary line with the formatted total duration
-    html_report += f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
-
-    html_report += """
-            <table>
-                <tr>
-                    <th>Config</th>
-                    <th>Time</th>
-                    <th>Duration</th>
-                    <th>Gateware Build</th>
-                    <th>Software Build</th>
-                    <th>Load</th>
-                    <th>Test</th>
-                </tr>
-    """
-
-    for name, results in report.items():
-        html_report += f"<tr><td>{name}</td>"
-        time_value = results.get('Time', '-')
-        duration_value = results.get('Duration', '-')
-        html_report += f"<td>{time_value}</td>"
-        html_report += f"<td>{duration_value}</td>"
-        for step in steps:
-            status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
-            status_class = f"status-{status.name}"
-            log_filename = f"build_{name}/{step}.rpt"
-            if status != LiteXCIStatus.NOT_RUN:
-                html_report += f"<td class='{status_class}'><a href='{log_filename}' target='_blank' class='report-link {status_class}'>{status.name}</a></td>"
-            else:
-                html_report += f"<td class='{status_class}'>{status.name}</td>"
-        html_report += "</tr>"
-
-    html_report += """
-            </table>
+            {generate_summary(report)}
+            {generate_table(report, steps)}
         </div>
     </body>
     </html>
     """
 
-    with open(report_filename, 'w') as html_file:
-        html_file.write(html_report)
+    with open(report_filename, 'w') as file:
+        file.write(html_content)
+
+def generate_summary(report):
+    tests_executed = sum(1 for results in report.values() if any(status != LiteXCIStatus.NOT_RUN for status in results.values()))
+    total_seconds = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    summary_content = f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
+    return summary_content
+
+def generate_table(report, steps):
+    table_html = """
+        <table>
+            <tr>
+                <th>Config</th>
+                <th>Time</th>
+                <th>Duration</th>
+                <th>Gateware Build</th>
+                <th>Software Build</th>
+                <th>Load</th>
+                <th>Test</th>
+            </tr>
+    """
+    for name, results in report.items():
+        table_html += f"<tr><td>{name}</td>"
+        time_value = results.get('Time', '-')
+        duration_value = results.get('Duration', '-')
+        table_html += f"<td>{time_value}</td><td>{duration_value}</td>"
+        for step in steps:
+            status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
+            status_class = f"status-{status.name}"
+            log_filename = f"build_{name}/{step}.rpt"
+            if status != LiteXCIStatus.NOT_RUN:
+                table_html += f"<td class='{status_class}'><a href='{log_filename}' target='_blank'>{status.name}</a></td>"
+            else:
+                table_html += f"<td class='{status_class}'>{status.name}</td>"
+        table_html += "</tr>"
+    table_html += "</table>"
+    return table_html
+
 
 # LiteX CI Build/Test ------------------------------------------------------------------------------
 
