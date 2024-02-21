@@ -102,17 +102,22 @@ class LiteXCIConfig:
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
+def enum_to_str(enum_val):
+    if isinstance(enum_val, enum.Enum):
+        return enum_val.name
+    return str(enum_val)
+
+# Modify the generate_html_report function to use enum_to_str for Enum conversion
 def generate_html_report(report, report_filename, steps):
     env = Environment(loader=FileSystemLoader(searchpath='./'))
     template = env.get_template('report_template.html')
 
-    # Ensure all enum values in the report are converted to their string names
+    # Convert Enum values to strings
     for name, results in report.items():
         for step in steps:
             step_key = step.capitalize()
-            if step_key in results and isinstance(results[step_key], LiteXCIStatus):
-                # Convert enum value to its name
-                results[step_key] = results[step_key].name
+            if step_key in results:
+                results[step_key] = enum_to_str(results[step_key])
 
     # Prepare summary information
     tests_executed = sum(1 for results in report.values() if any(status != 'NOT_RUN' for status in results.values()))
