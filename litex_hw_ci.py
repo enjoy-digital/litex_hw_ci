@@ -16,6 +16,8 @@ import argparse
 import subprocess
 from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader
+
 # LiteX CI Config Constants
 
 class LiteXCIStatus(enum.IntEnum):
@@ -101,122 +103,30 @@ class LiteXCIConfig:
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
 def generate_html_report(report, report_filename, steps):
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>LiteX CI Report</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-        <style>
-            body {{
-                font-family: 'Inter', sans-serif;
-                background-color: #121212;
-                color: #e0e0e0;
-                margin: 0;
-                padding: 20px;
-            }}
-            .container {{
-                max-width: 960px;
-                margin: 20px auto;
-                background: #1e1e1e;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-                padding: 20px;
-                border-radius: 8px;
-            }}
-            h1 {{
-                color: #e0e0e0;
-                font-size: 24px;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }}
-            th, td {{
-                text-align: left;
-                padding: 12px 15px;
-                border: 1px solid #333;
-            }}
-            th {{
-                background-color: #2c2c2c;
-                color: #ffffff;
-            }}
-            tr:nth-child(even) {{
-                background-color: #262626;
-            }}
-            .status {{
-                font-weight: bold;
-            }}
-            .status-SUCCESS {{
-                color: #4CAF50; /* Green for success */
-            }}
-            .status-BUILD_ERROR, .status-LOAD_ERROR, .status-TEST_ERROR {{
-                color: #F44336; /* Red for errors */
-            }}
-            .status-NOT_RUN {{
-                color: #FF9800; /* Orange for not run */
-            }}
-            a {{
-                color: #76B900; /* Adjusted for visibility in dark mode */
-                text-decoration: none;
-            }}
-            a:hover {{
-                text-decoration: underline;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>LiteX CI Report</h1>
-            {generate_summary(report)}
-            {generate_table(report, steps)}
-        </div>
-    </body>
-    </html>
-    """
+    env = Environment(loader=FileSystemLoader(searchpath='./'))
+    template = env.get_template('report_template.html')
 
-    with open(report_filename, 'w') as file:
-        file.write(html_content)
+    # Ensure all enum values in the report are converted to their string names
+    for name, results in report.items():
+        for step in steps:
+            step_key = step.capitalize()
+            if step_key in results and isinstance(results[step_key], LiteXCIStatus):
+                # Convert enum value to its name
+                results[step_key] = results[step_key].name
 
-def generate_summary(report):
-    tests_executed = sum(1 for results in report.values() if any(status != LiteXCIStatus.NOT_RUN for status in results.values()))
+    # Prepare summary information
+    tests_executed = sum(1 for results in report.values() if any(status != 'NOT_RUN' for status in results.values()))
     total_seconds = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    summary_content = f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
-    return summary_content
+    summary = f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
 
-def generate_table(report, steps):
-    table_html = """
-        <table>
-            <tr>
-                <th>Config</th>
-                <th>Time</th>
-                <th>Duration</th>
-                <th>Gateware Build</th>
-                <th>Software Build</th>
-                <th>Load</th>
-                <th>Test</th>
-            </tr>
-    """
-    for name, results in report.items():
-        table_html += f"<tr><td>{name}</td>"
-        time_value = results.get('Time', '-')
-        duration_value = results.get('Duration', '-')
-        table_html += f"<td>{time_value}</td><td>{duration_value}</td>"
-        for step in steps:
-            status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
-            status_class = f"status-{status.name}"
-            log_filename = f"build_{name}/{step}.rpt"
-            if status != LiteXCIStatus.NOT_RUN:
-                table_html += f"<td class='{status_class}'><a href='{log_filename}' target='_blank'>{status.name}</a></td>"
-            else:
-                table_html += f"<td class='{status_class}'>{status.name}</td>"
-        table_html += "</tr>"
-    table_html += "</table>"
-    return table_html
+    # Render the template with the report data and summary
+    html_content = template.render(report=report, steps=steps, summary=summary)
+
+    # Write the rendered HTML to the report file
+    with open(report_filename, 'w') as file:
+        file.write(html_content)
 
 
 # LiteX CI Build/Test ------------------------------------------------------------------------------
