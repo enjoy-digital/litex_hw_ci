@@ -31,67 +31,88 @@ class LiteXCIStatus(enum.IntEnum):
 class LiteXCIConfig:
     # Public.
     # -------
-    def __init__(self, target="", command="", post_command="", tty="", tty_baudrate=115200):
-        self.target        = target
-        self.command       = command
-        self.post_command  = post_command
-        self.tty           = tty
-        self.tty_baudrate  = tty_baudrate
-        self.extra_command = ""
+    def __init__(self, target="", gateware_command="", software_command="", tty="", tty_baudrate=115200):
+        self.target           = target
+        self.gateware_command = gateware_command
+        self.software_command = software_command
+        self.tty              = tty
+        self.tty_baudrate     = tty_baudrate
+        self.extra_command    = ""
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
         self.name = name
 
-    def build(self):
+    def gateware_build(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/build.log"
+        log_filename = f"{log_dir}/gateware_build.rpt"
 
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
+        #if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build --no-compile", log_filename):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --soc-json={log_dir}/soc.json --build", log_filename):
             return LiteXCIStatus.BUILD_ERROR
         return LiteXCIStatus.SUCCESS
 
-    def post(self): # FIXME: Rename
-        os.system(self.post_command)
+    def software_build(self):
+        log_dir = f"build_{self.name}"  # Modified log directory path
+        log_filename = f"{log_dir}/software_build.rpt"
+
+        # Create the log directory if it doesn't exist
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+        os.chdir("linux") # FIXME.
+        if self._run(self.software_command, "../" + log_filename): # FIXME.
+            os.chdir("..")  # FIXME.
+            return LiteXCIStatus.BUILD_ERROR
+        os.chdir("..")  # FIXME.
         return LiteXCIStatus.SUCCESS
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/load.log"
+        log_filename = f"{log_dir}/load.rpt"
 
         # Create the log directory if it doesn't exist
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.command} --output-dir={log_dir} --load", log_filename):
+        if self._run(f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir={log_dir} --load", log_filename):
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
 
     def test(self, send="reboot\n", check="Memtest OK", timeout=5.0):
+        log_dir = f"build_{self.name}"  # Modified log directory path
+        log_filename = f"{log_dir}/test.rpt"
+
+        # Create the log directory if it doesn't exist
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
+
         check   = "Welcome to Buildroot" # FIXME: For Linux test.
         timeout = 60                     # FIXME: For Linux test.
-        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser:
-                for cmd in send:
-                    ser.write(bytes(cmd, "utf-8"))
-                start_time = time.time()
-                while (time.time() - start_time) < timeout:
-                    data = ser.read(256)
-                    print(data.decode('utf-8', errors='replace'), end='', flush=True)
-                    if bytes(check, "utf-8") in data:
-                        return LiteXCIStatus.SUCCESS
-                return LiteXCIStatus.TEST_ERROR
+        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_filename, "w") as log_file:
+            for cmd in send:
+                ser.write(bytes(cmd, "utf-8"))
+                log_file.write(cmd)  # Log the command sent to the device
+
+            start_time = time.time()
+            while (time.time() - start_time) < timeout:
+                data = ser.read(256)
+                decoded_data = data.decode('utf-8', errors='replace')
+                print(decoded_data, end='', flush=True)
+                log_file.write(decoded_data)  # Log the data received from the device
+
+                if bytes(check, "utf-8") in data:
+                    return LiteXCIStatus.SUCCESS
+            return LiteXCIStatus.TEST_ERROR
 
     # Private.
     # --------
     def _run(self, command, log_filename):
         with open(log_filename, "w") as log_file:
             process = subprocess.Popen(shlex.split(command),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
+                stdout = subprocess.PIPE,
+                stderr = subprocess.STDOUT,
+                text   = True
             )
             for line in process.stdout:
                 print(line, end='')
@@ -190,7 +211,8 @@ def generate_html_report(report, report_filename, steps):
                     <th>Config</th>
                     <th>Time</th>
                     <th>Duration</th>
-                    <th>Build</th>
+                    <th>Gateware Build</th>
+                    <th>Software Build</th>
                     <th>Load</th>
                     <th>Test</th>
                 </tr>
@@ -205,7 +227,7 @@ def generate_html_report(report, report_filename, steps):
         for step in steps:
             status = results.get(step.capitalize(), LiteXCIStatus.NOT_RUN)
             status_class = f"status-{status.name}"
-            log_filename = f"build_{name}/{step}.log"
+            log_filename = f"build_{name}/{step}.rpt"
             if status != LiteXCIStatus.NOT_RUN:
                 html_report += f"<td class='{status_class}'><a href='{log_filename}' target='_blank' class='report-link {status_class}'>{status.name}</a></td>"
             else:
@@ -257,7 +279,7 @@ def main():
             return
         litex_ci_configs = {args.config: litex_ci_configs[args.config]}
 
-    steps = ['build', 'post', 'load', 'test']
+    steps = ['gateware_build', 'software_build', 'load', 'test']
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     generate_html_report(report, args.report, steps)
