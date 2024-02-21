@@ -17,8 +17,17 @@ from litex_hw_ci import LiteXCIConfig
 # - NaxRiscv 32-bit with FPU?
 # - NaxRiscv 64-bit with FPU?
 
-local_ip  = "192.168.1.50"
-remote_ip = "192.168.1.121"
+local_ip    = "192.168.1.50"
+remote_ip   = "192.168.1.121"
+test_checks = [
+    "Memtest OK",
+    "Starting network: OK",
+    #"Network Test: KO", # FIXME.
+    #"MMC Test: KO",     # FIXME.
+    #"USB Test: KO",     # FIXME.
+    "Welcome to Buildroot",
+]
+test_timeout = 60.0
 
 litex_ci_configs = {
     # Digilent Arty running VexRiscv-SMP with:
@@ -41,6 +50,8 @@ litex_ci_configs = {
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         tty              = "/dev/ttyUSB1",
+        test_checks      = test_checks,
+        test_timeout     = test_timeout
     ),
     # Digilent Arty running VexRiscv-SMP with:
     # - 2 Cores.
@@ -62,6 +73,8 @@ litex_ci_configs = {
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         tty              = "/dev/ttyUSB1",
+        test_checks      = test_checks,
+        test_timeout     = test_timeout,
     ),
 #    # Digilent Arty running NaxRiscv 32-bit with:
 #    # - 1 Core.

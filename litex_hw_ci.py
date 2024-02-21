@@ -31,12 +31,14 @@ class LiteXCIStatus(enum.IntEnum):
 class LiteXCIConfig:
     # Public.
     # -------
-    def __init__(self, target="", gateware_command="", software_command="", tty="", tty_baudrate=115200):
+    def __init__(self, target="", gateware_command="", software_command="", tty="", tty_baudrate=115200, test_checks=["Memtest OK"], test_timeout=5.0):
         self.target           = target
         self.gateware_command = gateware_command
         self.software_command = software_command
         self.tty              = tty
         self.tty_baudrate     = tty_baudrate
+        self.test_checks      = test_checks
+        self.test_timeout     = test_timeout
         self.extra_command    = ""
 
     def set_name(self, name=""):
@@ -56,18 +58,21 @@ class LiteXCIConfig:
         return LiteXCIStatus.SUCCESS
 
     def software_build(self):
-        log_dir = f"build_{self.name}"  # Modified log directory path
-        log_filename = f"{log_dir}/software_build.rpt"
+        if self.software_command == "":
+            return LiteXCIStatus.NOT_RUN
+        else:
+            log_dir = f"build_{self.name}"  # Modified log directory path
+            log_filename = f"{log_dir}/software_build.rpt"
 
-        # Create the log directory if it doesn't exist
-        Path(log_dir).mkdir(parents=True, exist_ok=True)
+            # Create the log directory if it doesn't exist
+            Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        os.chdir("linux") # FIXME.
-        if self._run(self.software_command, "../" + log_filename): # FIXME.
+            os.chdir("linux") # FIXME.
+            if self._run(self.software_command, "../" + log_filename): # FIXME.
+                os.chdir("..")  # FIXME.
+                return LiteXCIStatus.BUILD_ERROR
             os.chdir("..")  # FIXME.
-            return LiteXCIStatus.BUILD_ERROR
-        os.chdir("..")  # FIXME.
-        return LiteXCIStatus.SUCCESS
+            return LiteXCIStatus.SUCCESS
 
     def load(self):
         log_dir = f"build_{self.name}"  # Modified log directory path
@@ -80,29 +85,39 @@ class LiteXCIConfig:
             return LiteXCIStatus.LOAD_ERROR
         return LiteXCIStatus.SUCCESS
 
-    def test(self, send="reboot\n", check="Memtest OK", timeout=5.0):
-        log_dir = f"build_{self.name}"  # Modified log directory path
+    def test(self, send="reboot\n"):
+        log_dir = f"build_{self.name}"  # Use the modified log directory path.
         log_filename = f"{log_dir}/test.rpt"
 
-        # Create the log directory if it doesn't exist
+        # Ensure the log directory exists.
         Path(log_dir).mkdir(parents=True, exist_ok=True)
 
-        check   = "Welcome to Buildroot" # FIXME: For Linux test.
-        timeout = 60                     # FIXME: For Linux test.
         with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_filename, "w") as log_file:
             for cmd in send:
                 ser.write(bytes(cmd, "utf-8"))
-                log_file.write(cmd)  # Log the command sent to the device
+                log_file.write(cmd)  # Log the command sent to the device.
 
             start_time = time.time()
-            while (time.time() - start_time) < timeout:
+            current_check_index = 0  # Start with the first check in the list.
+            accumulated_data = ""  # Accumulate data to check for ordered strings.
+            while (time.time() - start_time) < self.test_timeout:
                 data = ser.read(256)
+                if not data:
+                    continue  # Skip empty data reads.
+
                 decoded_data = data.decode('utf-8', errors='replace')
                 print(decoded_data, end='', flush=True)
-                log_file.write(decoded_data)  # Log the data received from the device
+                log_file.write(decoded_data)  # Log the data received from the device.
+                accumulated_data += decoded_data
 
-                if bytes(check, "utf-8") in data:
-                    return LiteXCIStatus.SUCCESS
+                # Check if the current part of the test_checks list is in the accumulated data.
+                if self.test_checks[current_check_index] in accumulated_data:
+                    current_check_index += 1  # Move to the next check.
+                    if current_check_index >= len(self.test_checks):
+                        return LiteXCIStatus.SUCCESS  # All checks have been found in order.
+                    # Reset accumulated data to start checking for the next string.
+                    accumulated_data = ""
+
             return LiteXCIStatus.TEST_ERROR
 
     # Private.
@@ -291,7 +306,7 @@ def main():
         for step in steps:
             status = getattr(config, step)()
             report[name][step.capitalize()] = status
-            if status != LiteXCIStatus.SUCCESS:
+            if status not in [LiteXCIStatus.SUCCESS, LiteXCIStatus.NOT_RUN]:
                 break
         end_time = time.time()
         duration = end_time - start_time
