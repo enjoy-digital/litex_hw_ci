@@ -3,71 +3,83 @@
 #
 # This file is part of LiteX-HW-CI.
 #
-# Copyright (c) 2024 Enjoy-Digital <hello@enjoy-digital.fr>
+# Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
 import os
 import re
 import time
-import datetime
 import enum
 import shlex
 import serial
+import datetime
 import argparse
 import subprocess
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-# LiteX CI Config Constants
+# LiteX CI Config Constants ------------------------------------------------------------------------
 
 class LiteXCIStatus(enum.IntEnum):
-    SUCCESS = 0
+    SUCCESS     = 0
     BUILD_ERROR = 1
-    LOAD_ERROR = 2
-    TEST_ERROR = 3
-    NOT_RUN = 4
+    LOAD_ERROR  = 2
+    TEST_ERROR  = 3
+    NOT_RUN     = 4
 
-# Utility Functions
+# LiteX CI Helpers ---------------------------------------------------------------------------------
 
 def execute_command(command, log_path):
     with open(log_path, "w") as log_file:
-        process = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        process = subprocess.Popen(shlex.split(command),
+            stdout = subprocess.PIPE,
+            stderr = subprocess.STDOUT,
+            text   = True
+        )
         for line in process.stdout:
             print(line, end='')
             log_file.write(line)
     return process.wait() == 0
 
 def prepare_directory(name):
-    log_dir = Path(f"build_{name}")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    return log_dir
+    dst_dir = Path(f"build_{name}")
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    return dst_dir
 
-# LiteX CI Config
+# LiteX CI Config ----------------------------------------------------------------------------------
 
 class LiteXCIConfig:
-    def __init__(self, target="", gateware_command="", software_command="", tty="", tty_baudrate=115200, test_checks=["Memtest OK"], test_timeout=5.0):
-        self.target = target
+    def __init__(self, target="",
+        gateware_command ="",
+        software_command ="",
+        tty              ="",             tty_baudrate=115200,
+        test_checks      =["Memtest OK"], test_timeout=5.0
+    ):
+        self.target           = target
         self.gateware_command = gateware_command
         self.software_command = software_command
-        self.tty = tty
-        self.tty_baudrate = tty_baudrate
-        self.test_checks = test_checks
-        self.test_timeout = test_timeout
+        self.tty              = tty
+        self.tty_baudrate     = tty_baudrate
+        self.test_checks      = test_checks
+        self.test_timeout     = test_timeout
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
         self.name = name
 
     def perform_step(self, step_name, command, log_filename_suffix):
-        log_dir = prepare_directory(self.name)
-        log_path = log_dir / f"{log_filename_suffix}.rpt"
+        dst_dir = prepare_directory(self.name)
+        log_path = os.path.join(dst_dir, f"{log_filename_suffix}.rpt")
         if execute_command(command, log_path):
             return LiteXCIStatus.SUCCESS
         return getattr(LiteXCIStatus, f"{step_name.upper()}_ERROR")
 
     def gateware_build(self):
-        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir=build_{self.name} --soc-json=build_{self.name}/soc.json --build"
+        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
+        --output-dir=build_{self.name} \
+        --soc-json=build_{self.name}/soc.json \
+        --build"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
@@ -77,12 +89,14 @@ class LiteXCIConfig:
         return self.perform_step("build", command, "software_build")
 
     def load(self):
-        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} --output-dir=build_{self.name} --load"
+        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
+        --output-dir=build_{self.name} \
+        --load"
         return self.perform_step("load", command, "load")
 
     def test(self, send="reboot\n"):
-        log_dir = prepare_directory(self.name)
-        log_path = log_dir / "test.rpt"
+        dst_dir = prepare_directory(self.name)
+        log_path = os.path.join(dst_dir, "test.rpt")
         status = LiteXCIStatus.TEST_ERROR
         with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_path, "w") as log_file:
             ser.write(bytes(send, "utf-8"))
