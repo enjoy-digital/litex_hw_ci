@@ -4,7 +4,6 @@
 #
 
 INTERFACE=eth0
-REMOTE_IP=192.168.1.100
 
 MMC_DEV=/dev/mmcblk0p1
 USB_DEV=/dev/sda1
@@ -17,6 +16,7 @@ network_test() {
 	if [[ "x${res}x" == "xx" ]]; then
 		ret=1
 	else
+		REMOTE_IP=$(route | grep '^default' | tr -s ' ' | cut -n -d " " -f 2)
 		ping -c 2 $REMOTE_IP > /dev/null 2>&1
 		ret=$?
 	fi
