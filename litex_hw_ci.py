@@ -172,6 +172,7 @@ def main():
     steps = ['gateware_build', 'software_build', 'load', 'test']
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
+    os.system("cp html/report_style.css ./")
     generate_html_report(report, args.report, steps)
 
     for name, config in litex_ci_configs.items():
