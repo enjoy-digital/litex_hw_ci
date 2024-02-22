@@ -1,0 +1,103 @@
+body {
+    font-family      : 'Inter', sans-serif;
+    background-color : #0a0a0a;
+    color            : #dcdcdc;
+    margin           : 0;
+    padding          : 20px;
+    line-height      : 1.6;
+}
+
+.container {
+    max-width     : 1200px;
+    margin        : 20px auto;
+    background    : #121212;
+    box-shadow    : 0 4px 8px rgba(0, 0, 0, 0.4);
+    padding       : 20px;
+    border-radius : 10px;
+    overflow      : hidden;
+}
+
+header {
+    display         : flex;
+    align-items     : center;
+    justify-content : center;
+    margin-bottom   : 20px;
+}
+
+header img:first-child {
+    max-width    : 100px;
+    margin-right : 20px;
+}
+
+header img:last-child {
+    max-width: 200px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color      : #ffffff;
+    margin-top : 0;
+}
+
+h1 {
+    font-size     : 28px;
+    margin-bottom : 20px;
+}
+
+table {
+    width            : 100%;
+    border-collapse  : collapse;
+    margin-top       : 20px;
+    background-color : #181818;
+    box-shadow       : 0 2px 4px rgba(0, 0, 0, 0.3);
+    border-radius    : 8px;
+    overflow         : hidden;
+}
+
+th, td {
+    text-align    : left;
+    padding       : 16px 20px;
+    border-bottom : 1px solid #333333;
+}
+
+th {
+    background-color : #222222;
+    color            : #ffffff;
+    font-weight      : normal;
+}
+
+tr:nth-child(even) {
+    background-color: #1c1c1c;
+}
+
+tr:hover {
+    background-color: #242424;
+}
+
+.status {
+    font-weight   : bold;
+    padding       : 5px 10px;
+    border-radius : 4px;
+}
+
+.status-SUCCESS {
+    color: #00e676;
+}
+
+.status-BUILD_ERROR, .status-LOAD_ERROR, .status-TEST_ERROR {
+    color: #ff1744;
+}
+
+.status-NOT_RUN {
+    color: #ffa726;
+}
+
+a {
+    color: #69f0ae;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #b9f6ca;
+    text-decoration: underline;
+}

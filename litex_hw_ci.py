@@ -217,7 +217,7 @@ def main():
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     # Generate empty HTML report.
-    os.system("cp html/report_style.css ./")
+    os.system("cp html/report.css ./")
     generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
 
     # Iterate on configurations and progressively update report.
