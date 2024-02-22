@@ -1,6 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+header img:first-child {
+    max-width: 100px;
+    margin-right: 20px; /* Adjust space between images */
+}
+
+header img:last-child {
+    max-width: 200px;
+}
+</style>
     <link rel="stylesheet" type="text/css" href="report_style.css">
 
     <meta charset="UTF-8">
@@ -10,6 +27,10 @@
     
 </head>
 <body>
+    <header>
+    <img src="html/litex.png" alt="LiteX">
+    <img src="html/nlnet.svg" alt="Banner">
+    </header>
     <div class="container">
         <h1>LiteX CI Report</h1>
         {{ summary }}

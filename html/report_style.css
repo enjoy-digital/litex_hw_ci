@@ -17,6 +17,22 @@ body {
     overflow: hidden;
 }
 
+header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+header img:first-child {
+    max-width: 100px;
+    margin-right: 20px;
+}
+
+header img:last-child {
+    max-width: 200px;
+}
+
 h1, h2, h3, h4, h5, h6 {
     color: #ffffff; /* Bright white for headings */
     margin-top: 0;
