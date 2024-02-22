@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="report_style.css">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiteX CI Report</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <div class="container">
+        <h1>LiteX CI Report</h1>
+        {{ summary }}
+        <table>
+            <tr>
+                <th>Config</th>
+                <th>Time</th>
+                <th>Duration</th>
+                <th>Gateware Build</th>
+                <th>Software Build</th>
+                <th>Load</th>
+                <th>Test</th>
+            </tr>
+            {% for name, results in report.items() %}
+            <tr>
+                <td>{{ name }}</td>
+                <td>{{ results.get('Time', '-') }}</td>
+                <td>{{ results.get('Duration', '-') }}</td>
+                {% for step in steps %}
+                    {% set status = results.get(step.capitalize(), 'NOT_RUN') %}
+                    <td class="status-{{ status }}">
+                        {% if status != 'NOT_RUN' %}
+                            <a href="build_{{ name }}/{{ step }}.rpt" target="_blank">{{ status }}</a>
+                        {% else %}
+                            {{ status }}
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

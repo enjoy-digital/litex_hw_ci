@@ -110,7 +110,7 @@ def enum_to_str(enum_val):
 # Modify the generate_html_report function to use enum_to_str for Enum conversion
 def generate_html_report(report, report_filename, steps):
     env = Environment(loader=FileSystemLoader(searchpath='./'))
-    template = env.get_template('report_template.html')
+    template = env.get_template('html/ci_report_template.html')
 
     # Convert Enum values to strings
     for name, results in report.items():
