@@ -29,6 +29,9 @@ test_keywords = [
 ]
 test_timeout = 60.0
 
+exit_command        = "ykushcmd -d a"
+arty_setup_command  = "ykushcmd -d a && ykushcmd -u 2"
+
 litex_ci_configs = {
     # Digilent Arty running VexRiscv-SMP with:
     # - 1 Core.
@@ -49,6 +52,8 @@ litex_ci_configs = {
         --with-spi-sdcard \
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        setup_command    = arty_setup_command,
+        exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
         test_keywords    = test_keywords,
         test_timeout     = test_timeout
@@ -72,6 +77,8 @@ litex_ci_configs = {
         --with-spi-sdcard \
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        setup_command    = arty_setup_command,
+        exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
         test_keywords    = test_keywords,
         test_timeout     = test_timeout,
