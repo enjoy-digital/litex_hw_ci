@@ -30,12 +30,15 @@ class LiteXCIStatus(enum.IntEnum):
 
 # LiteX CI Helpers ---------------------------------------------------------------------------------
 
-def execute_command(command, log_path):
+def execute_command(command, log_path, shell=False):
     with open(log_path, "w") as log_file:
-        process = subprocess.Popen(shlex.split(command),
+        if not shell:
+            command = shlex.split(command)
+        process = subprocess.Popen(command,
             stdout = subprocess.PIPE,
             stderr = subprocess.STDOUT,
-            text   = True
+            text   = True,
+            shell  = shell
         )
         for line in process.stdout:
             print(line, end='')
@@ -79,10 +82,10 @@ class LiteXCIConfig:
         assert not hasattr(self, "name")
         self.name = name
 
-    def perform_step(self, step_name, command, log_filename_suffix):
+    def perform_step(self, step_name, command, log_filename_suffix, shell=False):
         dst_dir  = prepare_directory(self.name)
         log_path = os.path.join(dst_dir, f"{log_filename_suffix}.rpt")
-        if execute_command(command, log_path):
+        if execute_command(command, log_path, shell):
             return LiteXCIStatus.SUCCESS
         return getattr(LiteXCIStatus, f"{step_name.upper()}_ERROR")
 
@@ -90,15 +93,13 @@ class LiteXCIConfig:
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
         --output-dir=build_{self.name} \
         --soc-json=build_{self.name}/soc.json \
-        --build"
+        --build --no-compile"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
         if self.software_command == "":
             return LiteXCIStatus.NOT_RUN
-        os.chdir("linux") # FIXME
-        r = self.perform_step("build", self.software_command, "software_build")
-        os.chdir("..")
+        r = self.perform_step("build", self.software_command, "software_build", shell=True)
         return r
 
     def setup(self):

@@ -51,7 +51,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
@@ -76,7 +76,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
