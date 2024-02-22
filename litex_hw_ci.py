@@ -51,10 +51,12 @@ def prepare_directory(name):
 
 class LiteXCIConfig:
     def __init__(self, target="",
-        gateware_command ="",
-        software_command ="",
-        tty              ="",             tty_baudrate=115200,
-        test_keywords    =["Memtest OK"], test_timeout=5.0
+        gateware_command = "",
+        software_command = "",
+        setup_command    = "",
+        exit_command     = "",
+        tty              = "",             tty_baudrate=115200,
+        test_keywords    = ["Memtest OK"], test_timeout=5.0
     ):
         # Target Parameters.
         self.target           = target
@@ -62,6 +64,8 @@ class LiteXCIConfig:
         # Commands Parameters.
         self.gateware_command = gateware_command
         self.software_command = software_command
+        self.setup_command    = setup_command
+        self.exit_command     = exit_command
 
         # TTY Parameters.
         self.tty              = tty
@@ -93,6 +97,12 @@ class LiteXCIConfig:
         if self.software_command == "":
             return LiteXCIStatus.NOT_RUN
         return self.perform_step("build", self.software_command, "software_build")
+
+    def setup(self):
+        if self.setup_command == "":
+            return LiteXCIStatus.NOT_RUN
+        os.system(self.setup_command) # FIXME.
+        return LiteXCIStatus.SUCCESS
 
     def load(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
@@ -126,6 +136,11 @@ class LiteXCIConfig:
                         break
         return status
 
+    def exit(self):
+        if self.exit_command == "":
+            return LiteXCIStatus.NOT_RUN
+        os.system(self.exit_command) # FIXME.
+        return LiteXCIStatus.SUCCESS
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
@@ -198,7 +213,7 @@ def main():
             return
         litex_ci_configs = {args.config: litex_ci_configs[args.config]}
 
-    steps  = ['gateware_build', 'software_build', 'load', 'test']
+    steps  = ['setup', 'gateware_build', 'software_build', 'load', 'test', 'exit']
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     # Generate empty HTML report.
@@ -215,12 +230,13 @@ def main():
             report[name][step.capitalize()] = status
             if status not in [LiteXCIStatus.SUCCESS, LiteXCIStatus.NOT_RUN]:
                 break
-        end_time = time.time()
-        duration = end_time - start_time
-        report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
-        report[name]['Duration'] = f"{duration:.2f} seconds"
 
-        generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
+            end_time = time.time()
+            duration = end_time - start_time
+            report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+            report[name]['Duration'] = f"{duration:.2f} seconds"
+
+            generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
 
 if __name__ == "__main__":
     main()

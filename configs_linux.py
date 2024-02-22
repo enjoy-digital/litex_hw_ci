@@ -3,7 +3,7 @@
 #
 # This file is part of LiteX-HW-CI.
 #
-# Copyright (c) 2024 Enjoy-Digital <hello@enjoy-digital.fr>
+# Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
 from litex_hw_ci import LiteXCIConfig
