@@ -9,6 +9,7 @@
 import os
 import re
 import time
+import datetime
 import enum
 import shlex
 import serial
@@ -108,7 +109,7 @@ def enum_to_str(enum_val):
     return str(enum_val)
 
 # Modify the generate_html_report function to use enum_to_str for Enum conversion
-def generate_html_report(report, report_filename, steps):
+def generate_html_report(report, report_filename, steps, start_time, configs_file):
     env = Environment(loader=FileSystemLoader(searchpath='./'))
     template = env.get_template('html/ci_report_template.html')
 
@@ -124,7 +125,8 @@ def generate_html_report(report, report_filename, steps):
     total_seconds = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    summary = f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
+    summary = f"<p>Build Start Time: {start_time} | Configs File: {configs_file}</p>"
+    summary += f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
 
     # Render the template with the report data and summary
     html_content = template.render(report=report, steps=steps, summary=summary)
@@ -146,6 +148,9 @@ def main():
     parser.add_argument("--config",                        help="Select specific configuration from file (optional).")
     parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
     args = parser.parse_args()
+
+    # Capture the start time
+    test_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Import litex_ci_configs from the specified config file
     try:
@@ -173,7 +178,7 @@ def main():
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     os.system("cp html/report_style.css ./")
-    generate_html_report(report, args.report, steps)
+    generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
 
     for name, config in litex_ci_configs.items():
         name = format_name(name)
@@ -189,7 +194,7 @@ def main():
         report[name]['Time'] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
         report[name]['Duration'] = f"{duration:.2f} seconds"
 
-        generate_html_report(report, args.report, steps)
+        generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
 
 if __name__ == "__main__":
     main()
