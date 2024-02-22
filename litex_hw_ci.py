@@ -96,7 +96,10 @@ class LiteXCIConfig:
     def software_build(self):
         if self.software_command == "":
             return LiteXCIStatus.NOT_RUN
-        return self.perform_step("build", self.software_command, "software_build")
+        os.chdir("linux") # FIXME
+        r = self.perform_step("build", self.software_command, "software_build")
+        os.chdir("..")
+        return r
 
     def setup(self):
         if self.setup_command == "":
