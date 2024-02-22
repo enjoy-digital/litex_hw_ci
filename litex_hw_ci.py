@@ -54,14 +54,21 @@ class LiteXCIConfig:
         gateware_command ="",
         software_command ="",
         tty              ="",             tty_baudrate=115200,
-        test_checks      =["Memtest OK"], test_timeout=5.0
+        test_keywords    =["Memtest OK"], test_timeout=5.0
     ):
+        # Target Parameters.
         self.target           = target
+
+        # Commands Parameters.
         self.gateware_command = gateware_command
         self.software_command = software_command
+
+        # TTY Parameters.
         self.tty              = tty
         self.tty_baudrate     = tty_baudrate
-        self.test_checks      = test_checks
+
+        # Test Parameters.
+        self.test_keywords    = test_keywords
         self.test_timeout     = test_timeout
 
     def set_name(self, name=""):
@@ -109,7 +116,7 @@ class LiteXCIConfig:
                     print(data, end='', flush=True)
                     log_file.write(data)
                     accumulated_data += data
-                    if all(check in accumulated_data for check in self.test_checks):
+                    if all(check in accumulated_data for check in self.test_keywords):
                         status = LiteXCIStatus.SUCCESS
                         break
         return status

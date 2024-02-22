@@ -19,7 +19,7 @@ from litex_hw_ci import LiteXCIConfig
 
 local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.121"
-test_checks = [
+test_keywords = [
     "Memtest OK",
     "Starting network: OK",
     #"Network Test: KO", # FIXME.
@@ -50,7 +50,7 @@ litex_ci_configs = {
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-1-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         tty              = "/dev/ttyUSB1",
-        test_checks      = test_checks,
+        test_keywords    = test_keywords,
         test_timeout     = test_timeout
     ),
     # Digilent Arty running VexRiscv-SMP with:
@@ -73,7 +73,7 @@ litex_ci_configs = {
         --with-usb",
         software_command = "python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_vexriscv-linux-2-core/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         tty              = "/dev/ttyUSB1",
-        test_checks      = test_checks,
+        test_keywords    = test_keywords,
         test_timeout     = test_timeout,
     ),
 #    # Digilent Arty running NaxRiscv 32-bit with:
