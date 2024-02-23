@@ -3,12 +3,12 @@
 
 * buildroot version: master (must moved to a release)
 * Linux: 6.4.9 (fails to boot early versions).
-* openSBI: TBD
+* openSBI: 1.3.1 (litex-hub/opensbi branch 1.3.1-linux-on-litex-vexriscv)
 
 ### CPUs
 
 * vexriscv_smp: ok (`litex_vexriscv_defconfig` and `litex_vexriscv_usbhost_defconfig` with `--with-usb`)
-* naxriscv 32 : TBD
+* naxriscv 32 : ok
 * naxriscv 64 : won't boot (nothing after openSBI)
 
 Currently only tested with digilent arty target.
