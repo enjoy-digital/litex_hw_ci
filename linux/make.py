@@ -93,6 +93,17 @@ def combine_dtb(soc_json, overlays=""):
     else:
         subprocess.check_call(f"fdtoverlay -i {dtb_in} -o {dtb_out} {overlays}", shell=True)
 
+# DTB copy ---------------------------------------------------------------------------------
+
+def copy_dtb(soc_json):
+    base_dir = os.path.dirname(soc_json)
+    dtb_in   = os.path.join(base_dir, "soc.dtb")
+    dtb_out  = os.path.join("images", "soc.dtb")
+    shutil.copyfile(dtb_in, dtb_out)
+    dtb_in   = os.path.join(base_dir, "soc_combined.dtb")
+    dtb_out  = os.path.join("images", "soc_combined.dtb")
+    shutil.copyfile(dtb_in, dtb_out)
+
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
@@ -135,6 +146,7 @@ def main():
         generate_dts(args.soc_json, rootfs=args.rootfs)
         compile_dts(args.soc_json)
         combine_dtb(args.soc_json)
+        copy_dtb(args.soc_json)
 
     # Linux Build.
     # ------------
