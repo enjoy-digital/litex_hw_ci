@@ -18,7 +18,7 @@ from litex_hw_ci import LiteXCIConfig
 # - NaxRiscv 64-bit with FPU?
 
 local_ip    = "192.168.1.50"
-remote_ip   = "192.168.1.121"
+remote_ip   = "192.168.1.128"
 test_keywords = [
     "Memtest OK",
     "Starting network: OK",
@@ -83,22 +83,22 @@ litex_ci_configs = {
         test_keywords    = test_keywords,
         test_timeout     = test_timeout,
     ),
-#    # Digilent Arty running NaxRiscv 32-bit with:
-#    # - 1 Core.
-#    # - Ethernet 100Mbps.
-#    # - Coherent DMA.
-#    # - Ethernet 100Mbps.
-#    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
-#    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
-#    "arty:naxriscv-linux-32-bit" : LiteXCIConfig(
-#        target  = "digilent_arty",
-#        gateware_command = f"--sys-clk-freq 100e6 \
-#        --cpu-type=naxriscv --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc \
-#        --with-coherent-dma \
-#        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
-#        --with-spi-sdcard \
-#        --with-usb",
-#        post_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_naxriscv-linux-32-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
-#        tty     = "/dev/ttyUSB1",
-#    ),
+    # Digilent Arty running NaxRiscv 32-bit with:
+    # - 1 Core.
+    # - Ethernet 100Mbps.
+    # - Coherent DMA.
+    # - Ethernet 100Mbps.
+    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
+    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
+    "arty:naxriscv-linux-32-bit" : LiteXCIConfig(
+        target  = "digilent_arty",
+        gateware_command = f"--variant a7-100 --sys-clk-freq 100e6 \
+        --cpu-type=naxriscv --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc \
+        --with-coherent-dma \
+        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
+        --with-spi-sdcard \
+        --with-usb",
+        software_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_naxriscv-linux-32-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        tty     = "/dev/ttyUSB1",
+    ),
 }
