@@ -93,7 +93,7 @@ class LiteXCIConfig:
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
         --output-dir=build_{self.name} \
         --soc-json=build_{self.name}/soc.json \
-        --build --no-compile"
+        --build"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
