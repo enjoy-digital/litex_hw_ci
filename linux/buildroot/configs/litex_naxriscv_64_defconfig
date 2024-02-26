@@ -6,10 +6,10 @@ BR2_RISCV_64=y
 BR2_riscv_custom=y
 BR2_RISCV_ISA_RVM=y
 BR2_RISCV_ISA_RVA=y
-#BR2_RISCV_ISA_RVF=y
-#BR2_RISCV_ISA_RVD=y
-#BR2_RISCV_ISA_RVC=y
-BR2_RISCV_ABI_LP64D=y
+# BR2_RISCV_ISA_RVF is not set
+# BR2_RISCV_ISA_RVD is not set
+# BR2_RISCV_ISA_RVC is not set
+BR2_RISCV_ABI_LP64=y
 
 # Buildroot configuration
 BR2_CCACHE=y
