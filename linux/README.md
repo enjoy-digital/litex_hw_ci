@@ -9,7 +9,8 @@
 
 * vexriscv_smp: ok (`litex_vexriscv_defconfig` and `litex_vexriscv_usbhost_defconfig` with `--with-usb`)
 * naxriscv 32 : ok
-* naxriscv 64 : won't boot (nothing after openSBI)
+* naxriscv 64 : partial (ok with **ABI=lp64** and without **fdc** extensions =>
+  kernel panic otherwise)
 
 Currently only tested with digilent arty target.
 
