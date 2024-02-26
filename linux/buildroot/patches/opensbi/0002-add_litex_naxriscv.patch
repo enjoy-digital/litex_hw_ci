@@ -58,10 +58,10 @@ index 000000000..df9d88343
 +# Command for platform specific "make run"
 +platform-runcmd = echo LiteX/NaxRiscv SMP
 +
-+PLATFORM_RISCV_XLEN = 32
-+PLATFORM_RISCV_ABI = ilp32d
-+PLATFORM_RISCV_ISA = rv32imafd
-+PLATFORM_RISCV_CODE_MODEL = medany
++#PLATFORM_RISCV_XLEN = 64
++#PLATFORM_RISCV_ABI = lp64
++#PLATFORM_RISCV_ISA = rv64ima
++#PLATFORM_RISCV_CODE_MODEL = medany
 +
 +# Blobs to build
 +FW_TEXT_START=0x40F00000
