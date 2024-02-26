@@ -91,14 +91,35 @@ litex_ci_configs = {
     # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
     # - USB-Host through Machdyne PMOD on PMOD X formated as X.
     "arty:naxriscv-linux-32-bit" : LiteXCIConfig(
-        target  = "digilent_arty",
+        target           = "digilent_arty",
         gateware_command = f"--variant a7-100 --sys-clk-freq 100e6 \
         --cpu-type=naxriscv --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = "cd linux && python3 make.py --cpu-type=vexriscv --soc-json=../build_arty_naxriscv-linux-32-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = "cd linux && python3 make.py --cpu-type=naxriscv --soc-json=../build_arty_naxriscv-linux-32-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
         tty     = "/dev/ttyUSB1",
     ),
+    # Digilent Arty running NaxRiscv 64-bit with:
+    # - 1 Core.
+    # - Ethernet 100Mbps.
+    # - Coherent DMA.
+    # - Ethernet 100Mbps.
+    # - SPI-SDCard through Digilent PMOD on PMOD X formated as X.
+    # - USB-Host through Machdyne PMOD on PMOD X formated as X.
+    "arty:naxriscv-linux-64-bit" : LiteXCIConfig(
+        target           = "digilent_arty",
+        gateware_command = f"--variant a7-100 --sys-clk-freq 100e6 \
+        --bus-standard axi-lite \
+        --cpu-type=naxriscv --xlen 64 \
+        --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc  --with-fpu \
+        --with-coherent-dma \
+        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
+        --with-spi-sdcard \
+        --with-usb",
+        software_command = "cd linux && python3 make.py --cpu-type=naxriscv --xlen 64 --soc-json=../build_arty_naxriscv-linux-64-bit/soc.json --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        tty              = "/dev/ttyUSB1",
+    ),
+
 }
