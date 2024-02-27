@@ -36,7 +36,7 @@ def linux_build(cpu_type, xlen=32, with_usb=False):
 
     # Get Buildroot.
     if not os.path.exists("buildroot"):
-        ret = os.system("git clone http://github.com/buildroot/buildroot")
+        ret = os.system("git clone --depth 1 --single-branch -b master http://github.com/buildroot/buildroot")
         if ret != 0:
             return ret
     os.chdir("buildroot")
