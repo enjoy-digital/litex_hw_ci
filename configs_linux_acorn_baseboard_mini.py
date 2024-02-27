@@ -24,7 +24,7 @@ litex_ci_configs = {
     # - 1 Core.
     # - FPU.
     # - Coherent DMA.
-    # - Ethernet 1000Mbps.
+    # - 1Gbps Ethernet / 1000BaseX with SFP module.
     "acorn_baseboard_mini_naxriscv_32_bit" : LiteXCIConfig(
         target           = "litex_acorn_baseboard_mini",
         gateware_command = f"--sys-clk-freq 100e6 \
@@ -42,7 +42,7 @@ litex_ci_configs = {
     # - 1 Core.
     # - FPU.
     # - Coherent DMA.
-    # - Ethernet 1000Mbps.
+    # - 1Gbps Ethernet / 1000BaseX with SFP module.
     "acorn_baseboard_mini_naxriscv_64_bit" : LiteXCIConfig(
         target           = "litex_acorn_baseboard_mini",
         gateware_command = f"--sys-clk-freq 100e6 \
