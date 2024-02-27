@@ -7,7 +7,7 @@ GENIMAGE_CFG="${BOARD_DIR}/genimage.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 
 LINUX_ON_VEXRISCV_OUT_DIR=$BR2_EXTERNAL_LITEX_VEXRISCV_PATH/../images
-DST_DTB=$LINUX_ON_VEXRISCV_OUT_DIR/rv32.dtb
+DST_DTB=$LINUX_ON_VEXRISCV_OUT_DIR/soc.dtb
 DST_OPENSBI=$LINUX_ON_VEXRISCV_OUT_DIR/opensbi.bin
 DST_IMAGE=$LINUX_ON_VEXRISCV_OUT_DIR/Image
 DST_ROOTFS=$LINUX_ON_VEXRISCV_OUT_DIR/rootfs.cpio
@@ -21,7 +21,7 @@ if [ ! -e $DST_DTB ]; then
 	echo ""
 	echo "Warning: missing file $DST_DTB"
 	echo "a dummy file will be created"
-	echo "must be replaced manually by required rv32.dtb"
+	echo "must be replaced manually by required soc.dtb"
 	echo ""
 	touch $DST_OPENSBI
 fi
