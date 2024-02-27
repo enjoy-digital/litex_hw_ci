@@ -42,7 +42,7 @@ litex_ci_configs = {
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py --cpu-type=vexriscv --xlen 32 --soc-json=../build_acorn_vexriscv_32_bit_4_cores_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_acorn_vexriscv_32_bit_4_cores_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -61,7 +61,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py --cpu-type=naxriscv --xlen 32 --soc-json=../build_acorn_naxriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_acorn_naxriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -80,7 +80,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py --cpu-type=naxriscv --xlen 32 --soc-json=../build_acorn_naxriscv_32_bit_axi_lite/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_acorn_naxriscv_32_bit_axi_lite/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -99,7 +99,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py --cpu-type=naxriscv --xlen 64 --soc-json=../build_acorn_naxriscv_64_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_acorn_naxriscv_64_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -118,7 +118,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py --cpu-type=naxriscv --xlen 64 --soc-json=../build_acorn_naxriscv_64_bit_axi_lite/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_acorn_naxriscv_64_bit_axi_lite/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",

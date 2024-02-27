@@ -121,9 +121,6 @@ def main():
 
     # SoC/Board.
     parser.add_argument("--soc-json",                                      help="SoC JSON file.")
-    parser.add_argument("--cpu-type",             default=None,            help="Select CPU (vexriscv or naxriscv).") # FIXME: Remove, can be found in .json.
-    parser.add_argument("--xlen",                 default=32,              help="Select CPU Size (naxriscv).") # FIXME: Remove, can be found in .json.
-    parser.add_argument("--with-usb",             action="store_true",     help="Enable USB-Host.")                   # FIXME: Remove, can be found in .json.
     # RootFS.
     parser.add_argument("--rootfs",               default="ram0",          help="Location of the RootFS: ram0 or mmcblk0p2")
 
@@ -134,6 +131,14 @@ def main():
     parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
 
     args = parser.parse_args()
+
+    # Extract information from json file.
+    # -----------------------------------
+    with open(args.soc_json) as json_file:
+        json_content = json.load(json_file)
+        with_usb  = "usb_ohci_ctrl" in json_content["memories"]
+        xlen      = {True: 32, False: 64}[json_content["constants"]["config_cpu_isa"].startswith("rv32")]
+        cpu_type  = {True: "vexriscv", False: "naxriscv"}[json_content["constants"]["config_cpu_human_name"].startswith("vexriscv")]
 
     # Linux Clean.
     # ------------
@@ -153,7 +158,7 @@ def main():
     # ------------
     if args.linux_build:
         shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
-        if linux_build(args.cpu_type, xlen=args.xlen, with_usb=args.with_usb) != 0:
+        if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
             return
 
     # TFTP-Prepare.
