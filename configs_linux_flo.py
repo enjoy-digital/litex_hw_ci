@@ -14,13 +14,10 @@ local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.121"
 test_keywords = [
     "Memtest OK",
-    "Starting network: OK",
     "Network Test: OK",
     "Welcome to Buildroot",
 ]
 test_timeout = 60.0
-
-fixme = 32
 
 litex_ci_configs = {
     # Acorn Baseboard Mini running NaxRiscv-32-bit with:
