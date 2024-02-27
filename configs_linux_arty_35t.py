@@ -22,7 +22,7 @@ test_keywords = [
     "Memtest OK",
     "Network Test: OK",
     "MMC Test: OK",
-    #"USB Test: OK",
+    "USB Test: OK",
     "Welcome to Buildroot",
 ]
 test_timeout = 60.0
