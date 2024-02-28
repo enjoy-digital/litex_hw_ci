@@ -45,8 +45,8 @@ litex_ci_configs = {
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
-        --with-usb --no-compile",
-        #software_command = f"cd linux && python3 make.py --soc-json=../build_arty_vexriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        --with-usb",
+        software_command = f"cd linux && python3 make.py --soc-json=../build_arty_vexriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
