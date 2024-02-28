@@ -6,7 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig
+from litex_hw_ci import LiteXCIConfig, LiteXCITest
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
@@ -20,12 +20,13 @@ from litex_hw_ci import LiteXCIConfig
 
 local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.121"
-test_keywords = [
-    "Memtest OK",
-    "Network Test: OK",
-    "Welcome to Buildroot",
+
+tests = [
+    LiteXCITest(send="reboot\n",                sleep=1),
+    LiteXCITest(keyword="Memtest OK",           timeout=60.0),
+    LiteXCITest(keyword="Network Test: OK",     timeout=60.0),
+    LiteXCITest(keyword="Welcome to Buildroot", timeout=60.0),
 ]
-test_timeout = 60.0
 
 litex_ci_configs = {
     # Acorn Baseboard Mini running VexRiscv 32-bit with:
@@ -46,8 +47,7 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Acorn Baseboard Mini running NaxRiscv-32-bit with:
     # - Wishbone Bus.
@@ -65,8 +65,7 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Acorn Baseboard Mini running NaxRiscv-32-bit with:
     # - AXI-Lite Bus.
@@ -84,8 +83,7 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Acorn Baseboard Mini running NaxRiscv-64-bit with:
     # - Wishbone Bus.
@@ -103,8 +101,7 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Acorn Baseboard Mini running NaxRiscv-64-bit with:
     # - AXI-Lite Bus.
@@ -122,7 +119,6 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
 }

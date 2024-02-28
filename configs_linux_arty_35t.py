@@ -6,7 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig
+from litex_hw_ci import LiteXCIConfig, LiteXCITest
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
@@ -18,14 +18,15 @@ from litex_hw_ci import LiteXCIConfig
 
 local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.121"
-test_keywords = [
-    "Memtest OK",
-    "Network Test: OK",
-    "MMC Test: OK",
-    "USB Test: OK",
-    "Welcome to Buildroot",
+
+tests = [
+    LiteXCITest(send="reboot\n",                sleep=1),
+    LiteXCITest(keyword="Memtest OK",           timeout=60.0),
+    LiteXCITest(keyword="Network Test: OK",     timeout=60.0),
+    LiteXCITest(keyword="MMC Test: OK",         timeout=60.0),
+    LiteXCITest(keyword="USB Test: OK",         timeout=60.0),
+    LiteXCITest(keyword="Welcome to Buildroot", timeout=60.0),
 ]
-test_timeout = 60.0
 
 litex_ci_configs = {
     # Diglent Arty running VexRiscv 32-bit with:
@@ -44,13 +45,12 @@ litex_ci_configs = {
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
-        --with-usb",
-        software_command = f"cd linux && python3 make.py --soc-json=../build_arty_vexriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
+        --with-usb --no-compile",
+        #software_command = f"cd linux && python3 make.py --soc-json=../build_arty_vexriscv_32_bit_wishbone/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Diglent Arty running VexRiscv 32-bit with:
     # - AXI-Lite Bus.
@@ -73,8 +73,7 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Diglent Arty running VexRiscv 32-bit with:
     # - AXI Bus.
@@ -97,7 +96,6 @@ litex_ci_configs = {
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
 }

@@ -19,14 +19,11 @@ from litex_hw_ci import LiteXCIConfig
 
 local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.128"
-test_keywords = [
-    "Memtest OK",
-    "NuttShell (NSH)",
+tests = [
+    LiteXCITest(send="reboot\n",           sleep=1),
+    LiteXCITest(keyword="Memtest OK",      timeout=60.0),
+    LiteXCITest(keyword="NuttShell (NSH)", timeout=60.0),
 ]
-test_timeout = 60.0
-
-exit_command        = "ykushcmd -d a"
-arty_setup_command  = "ykushcmd -d a && ykushcmd -u 2"
 
 litex_ci_configs = {
     # Digilent Arty running VexRiscv with:
@@ -41,11 +38,8 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-sdcard",
         software_command = "cd nuttx && python3 make.py --nuttx-clean --nuttx-build --nuttx-prepare-tftp",
-        #setup_command    = arty_setup_command,
-        #exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
         tty_baudrate     = 1000000,
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout
+        tests            = tests,
     ),
 }

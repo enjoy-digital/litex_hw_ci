@@ -6,7 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig
+from litex_hw_ci import LiteXCIConfig, LiteXCITest
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
@@ -19,15 +19,13 @@ from litex_hw_ci import LiteXCIConfig
 
 local_ip    = "192.168.1.50"
 remote_ip   = "192.168.1.128"
-test_keywords = [
-    "Memtest OK",
-    "Starting network: OK",
-    #"Network Test: KO", # FIXME.
-    #"MMC Test: KO",     # FIXME.
-    #"USB Test: KO",     # FIXME.
-    "Welcome to Buildroot",
+
+tests = [
+    LiteXCITest(send="reboot\n",                sleep=1),
+    LiteXCITest(keyword="Memtest OK",           timeout=60.0),
+    LiteXCITest(keyword="Network Test: OK",     timeout=60.0),
+    LiteXCITest(keyword="Welcome to Buildroot", timeout=60.0),
 ]
-test_timeout = 60.0
 
 exit_command        = "ykushcmd -d a"
 arty_setup_command  = "ykushcmd -d a && ykushcmd -u 2"
@@ -55,8 +53,7 @@ litex_ci_configs = {
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout
+        tests            = tests,
     ),
     # Digilent Arty running VexRiscv-SMP with:
     # - 2 Cores.
@@ -80,8 +77,7 @@ litex_ci_configs = {
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Digilent Arty running NaxRiscv 32-bit with:
     # - 1 Core.
@@ -102,8 +98,7 @@ litex_ci_configs = {
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
     # Digilent Arty running NaxRiscv 64-bit with:
     # - 1 Core.
@@ -125,8 +120,7 @@ litex_ci_configs = {
         setup_command    = arty_setup_command,
         exit_command     = exit_command,
         tty              = "/dev/ttyUSB1",
-        test_keywords    = test_keywords,
-        test_timeout     = test_timeout,
+        tests            = tests,
     ),
 
 }
