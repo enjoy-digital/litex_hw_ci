@@ -28,6 +28,15 @@ class LiteXCIStatus(enum.IntEnum):
     TEST_ERROR  = 3
     NOT_RUN     = 4
 
+# LiteX CI Test ------------------------------------------------------------------------------------
+
+class LiteXCITest:
+    def __init__(self, send="", keyword=None, timeout=5.0, sleep=0.0):
+        self.send    = send
+        self.keyword = keyword
+        self.timeout = timeout
+        self.sleep   = sleep
+
 # LiteX CI Helpers ---------------------------------------------------------------------------------
 
 def execute_command(command, log_path, shell=False):
@@ -58,8 +67,8 @@ class LiteXCIConfig:
         software_command = "",
         setup_command    = "",
         exit_command     = "",
-        tty              = "",             tty_baudrate=115200,
-        test_keywords    = ["Memtest OK"], test_timeout=5.0
+        tty              = "", tty_baudrate=115200,
+        tests            = [LiteXCITest(send="reboot", keyword="Memtest OK", timeout=5.0)],
     ):
         # Target Parameters.
         self.target           = target
@@ -74,9 +83,8 @@ class LiteXCIConfig:
         self.tty              = tty
         self.tty_baudrate     = tty_baudrate
 
-        # Test Parameters.
-        self.test_keywords    = test_keywords
-        self.test_timeout     = test_timeout
+        # Tests.
+        self.tests            = tests
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
@@ -114,7 +122,7 @@ class LiteXCIConfig:
         --load"
         return self.perform_step("load", command, "load")
 
-    def test(self, reboot_command="reboot\n"):
+    def test(self):
         dst_dir  = prepare_directory(self.name)
         log_path = os.path.join(dst_dir, "test.rpt")
         status = LiteXCIStatus.TEST_ERROR
@@ -123,21 +131,28 @@ class LiteXCIConfig:
         with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_path, "w") as log_file:
             start_time = time.time()
 
-            # Reboot hardware.
-            ser.write(bytes(reboot_command, "utf-8"))
+            # Iterate on Tests.
+            for test in self.tests:
 
-            # Listen and log TTY until all keywords are found or timeout.
-            accumulated_keywords = ""
-            while time.time() - start_time < self.test_timeout:
-                data = ser.read(256).decode('utf-8', errors='replace')
-                if data:
-                    print(data, end='', flush=True)
-                    log_file.write(data)
-                    accumulated_keywords += data
-                    # When all keywords are found, break with success status.
-                    if all(keyword in accumulated_keywords for keyword in self.test_keywords):
-                        status = LiteXCIStatus.SUCCESS
-                        break
+                # Send Commands.
+                ser.write(bytes(test.send, "utf-8"))
+
+                # Receive/Check Keywords.
+                if test.keyword is not None:
+                    _data = ""
+                    while time.time() - start_time < test.timeout:
+                        data = ser.read().decode('utf-8', errors='replace')
+                        if data:
+                            print(data, end='', flush=True)
+                            log_file.write(data)
+                            _data += data
+                            if test.keyword in _data:
+                                if test is self.tests[-1]:
+                                    status = LiteXCIStatus.SUCCESS
+                                break
+                # Sleep.
+                time.sleep(test.sleep)
+
         return status
 
     def exit(self):
