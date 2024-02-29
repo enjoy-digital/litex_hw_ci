@@ -23,6 +23,8 @@ tests = [
     LiteXCITest(send="reboot\n",           sleep=1),
     LiteXCITest(keyword="Memtest OK",      timeout=60.0),
     LiteXCITest(keyword="NuttShell (NSH)", timeout=60.0),
+    LiteXCITest(send=f"ifconfig eth0 {local_ip}\n", timeout=10.0),
+    LiteXCITest(send=f"ping {remote_ip}\n", keyword="10 packets transmitted, 10 received, 0% packet loss", timeout=60.0),
 ]
 
 litex_ci_configs = {
