@@ -74,6 +74,17 @@ def nuttx_prepare_tftp(tftp_root="/tftpboot"):
     ret = os.system(f"cp third_party/nuttx/nuttx.bin {tftp_root}/boot.bin")
     return ret
 
+def nuttx_copy_images(soc_json):
+    base_dir   = os.path.dirname(soc_json)
+    images_dir = os.path.join(base_dir, "images")
+
+    # Create target directory
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
+    return os.system(f"cp third_party/nuttx/nuttx.bin {images_dir}/")
+
+
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
@@ -89,10 +100,13 @@ def main():
     description = "LiteX Hardware CI Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
+    # SoC/Board.
+    parser.add_argument("--soc-json",                                      help="SoC JSON file.")
     # Nuttx.
     parser.add_argument("--nuttx-clean",          action="store_true",     help="Clean Nuttx Build.")
     parser.add_argument("--nuttx-build",          action="store_true",     help="Build Nuttx Images.")
     parser.add_argument("--nuttx-prepare-tftp",   action="store_true",     help="Prepare/Copy Nuttx Images to TFTP root directory.")
+    parser.add_argument("--nuttx-copy-images",    action="store_true",     help="Copy Nuttx Images to target build directory.")
 
     args = parser.parse_args()
 
@@ -112,6 +126,12 @@ def main():
     # -------------
     if args.nuttx_prepare_tftp:
         if nuttx_prepare_tftp() != 0:
+            return
+
+    # Copy-To-Build.
+    # --------------
+    if args.nuttx_copy_images:
+        if nuttx_copy_images(soc_json=args.soc_json) != 0:
             return
 
 if __name__ == "__main__":
