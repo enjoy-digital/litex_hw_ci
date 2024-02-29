@@ -6,7 +6,7 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig
+from litex_hw_ci import LiteXCIConfig, LiteXCITest
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
