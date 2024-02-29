@@ -1,93 +1,45 @@
-# Nuttx on LiteX
+[> Status
+---------
 
-## Install
+* nuttx / nuttx-apps version: master
+* nuttx defconfig: **netnsh**
 
-### Env
+### CPUs
 
-- `apt install kconfig-frontends`
-- must have a riscv toolchain (debian's riscv64-unknown seems not working (missing math.h). sifive's toolchain is fine.)
+* vexriscv 32 secure: ok
+* vexriscv 32 smp: TDB
 
-### Nuttx
+Currently only tested with digilent arty 35t/100t target.
 
-```
-#create the workspace
-mkdir somewhere/nuttxOnLiteX
+[> Details
+----------
 
-cd somewhere/nuttxOnLiteX
+Only *liteuart* and *liteeth* are tested (litesd seems not working / bad
+configuration).
 
-# Clone nuttx.
-git clone https://github.com/apache/nuttx.git nuttx
+## UART test
 
-# Clone apps (warning: must be called apps to respect default path).
-git clone https://github.com/apache/nuttx-apps apps
-```
+UART must be configured with a 1000000 baudrate (115200 works but seems to lost
+chars).
 
-**Note**
-For titanium board patch *nuttx_on_titanium.patch* must be applied (different phy).
+This test check if sequence `NuttShell (NSH)` is displayed
 
-## Nuttx: Init/config/compile
+## Ethernet test
 
-```
-cd nuttx
-./tools/configure.sh -l arty_a7:netnsh
-```
+Two sequences are sent:
+* `ifconfig LOCAL_IP` to configure *eth0* interface with ip provided by the
+  *config_nuttx.py*. No read is done
+* `ping REMOTE_IP` to verify if nuttx is able to ping host computer. The sequence
+  `10 packets transmitted, 10 received, 0% packet loss` must be find in nuttx
+  answer
 
-**Note:** `nsh` is the basic configuration, `netnsh` is the basic configuration with network support. See **boards/risc-v/litex/arty_a7/configs**.
+[> Notes and limitations
+------------------------
 
-### Tweak
-
-
-```
-make menuconfig
-```
-
-To change default IP ADDR (IP is a 32bits hex format)
-
-```
-Application Configuration
- |
- +--> Network Utilites
-       |
-       +--> Network Initialization
-             |
-             +--> IP Address Configuration
-                   |
-                   +--> Target IPv4 address (NETINIT_IPADDR)
-                   |
-                   +--> Router IPv4 address (NETINIT_DRIPADDR)
-```
-
-### Build
-
-```
-make -j
-```
-
-### install for netboot
-
-```
-cd nuttx.bin /tftpboot/boot.bin
-```
-
-## LiteX
-
-```
-python -m digilent_arty.py --with-ethernet --with-sdcard --cpu-type=vexriscv --cpu-variant=secure --uart-baudrate 1000000 --build --load
-```
-
-## Tests
-
-```
-litex_term --speed 1000000 /dev/ttyUSB1
-```
-
-### Ping/network
-```
-nsh> ifconfig eth0 192.168.1.50
-nsh> ping 192.168.1.4
-```
-
-## Refs
-
-- https://nuttx.apache.org/docs/latest/quickstart/install.html
-- https://nuttx.apache.org/docs/latest/platforms/risc-v/litex/index.html
+* *memorymap* is hardcoded in *arch/risc-v/src/litex/hardware/litex_memorymap.h* but it
+  seems possible to provides another file by using
+  `CONFIG_LITEX_CUSTOM_MEMORY_MAP_PATH`. It's also true for IRQ with
+  `LITEX_CUSTOM_IRQ_DEFINITIONS_PATH`
+* *sys_clk_freq* is fixed in `defconfig` at 100MHz but may be modified using
+  `make menuconfig`
+* A solution to generate custom *irq*, *memorymap* and *defconfig* ?
