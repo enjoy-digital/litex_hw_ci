@@ -58,6 +58,22 @@ def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
     ret |= os.system(f"cp images/boot_rootfs_{rootfs}.json /tftpboot/boot.json")
     return ret
 
+def linux_copy_images(soc_json):
+    base_dir   = os.path.dirname(soc_json)
+    images_dir = os.path.join(base_dir, "images")
+
+    # Create target directory
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
+    # extracts files to copy from boot.json and copy it
+    with open(os.path.join("images", "boot.json")) as json_file:
+        json_content = json.load(json_file)
+        ret = os.system(f"cp images/boot.json {images_dir}/")
+        for f in json_content.keys():
+            ret |= os.system(f"cp images/{f} {images_dir}/")
+    return ret
+
 # Device Tree --------------------------------------------------------------------------------------
 
 from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
@@ -129,6 +145,7 @@ def main():
     parser.add_argument("--linux-build",          action="store_true",     help="Build Linux Images (through Buildroot) and Device Tree.")
     parser.add_argument("--linux-generate-dtb",   action="store_true",     help="Prepare device tree.")
     parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
+    parser.add_argument("--linux-copy-images",    action="store_true",     help="Copy Linux Images to target build directory.")
 
     args = parser.parse_args()
 
@@ -166,6 +183,12 @@ def main():
     if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return
+
+    # Copy-Images.
+    # ------------
+    if args.linux_copy_images:
+        linux_copy_images(soc_json=args.soc_json)
+
 
 if __name__ == "__main__":
     main()
