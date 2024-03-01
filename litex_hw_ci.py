@@ -208,10 +208,14 @@ def format_name(name):
 def main():
     parser = argparse.ArgumentParser(description="LiteX HW CI")
     parser.add_argument("configs_file",                    help="Path to the configurations file.")
-    parser.add_argument("--report", default="report.html", help="Filename for the HTML report (default: report.html).")
+    parser.add_argument("--report",                        help="Filename for the HTML report. If not specified, it defaults to the basename of the config file with .html extension.")
     parser.add_argument("--config",                        help="Select specific configuration from file (optional).")
     parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
     args = parser.parse_args()
+
+    if not args.report:
+        base_name = os.path.basename(args.configs_file)
+        args.report = f"{os.path.splitext(base_name)[0]}.html"
 
     # Capture the start time.
     test_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
