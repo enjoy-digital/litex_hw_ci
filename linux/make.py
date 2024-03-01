@@ -161,7 +161,7 @@ def main():
     # ------------
     if args.linux_clean:
         if linux_clean() != 0:
-            return
+            return 1
 
     # Device Tree Build.
     # ------------------
@@ -176,19 +176,20 @@ def main():
     if args.linux_build:
         shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
         if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
-            return
+            return 1
 
     # TFTP-Prepare.
     # -------------
     if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
-            return
+            return 1
 
     # Copy-Images.
     # ------------
     if args.linux_copy_images:
         linux_copy_images(soc_json=args.soc_json)
 
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
