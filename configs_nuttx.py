@@ -30,6 +30,7 @@ litex_ci_configs = {
         --cpu-type=vexriscv --cpu-variant=secure \
         --bus-bursting \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sdcard",
         software_command = "cd nuttx && python3 make.py --nuttx-clean --nuttx-build --nuttx-prepare-tftp",
         tty              = "/dev/ttyUSB1",
         tty_baudrate     = 1000000,
