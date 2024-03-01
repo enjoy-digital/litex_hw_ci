@@ -103,11 +103,17 @@ class LiteXCIConfig:
             return LiteXCIStatus.SUCCESS
         return getattr(LiteXCIStatus, f"{step_name.upper()}_ERROR")
 
-    def gateware_build(self):
+    def firmware_build(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
         --output-dir=build_{self.name} \
         --soc-json=build_{self.name}/soc.json \
-        --build"
+        --build --no-compile-gateware"
+        return self.perform_step("build", command, "gateware_build")
+
+    def gateware_build(self):
+        command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
+        --output-dir=build_{self.name} \
+        --build --no-compile-software"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
@@ -242,7 +248,7 @@ def main():
             return
         litex_ci_configs = {args.config: litex_ci_configs[args.config]}
 
-    steps  = ['setup', 'gateware_build', 'software_build', 'load', 'test', 'exit']
+    steps  = ["setup", "firmware_build", "gateware_build", "software_build", "load", "test", "exit"]
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     # Generate empty HTML report.
@@ -266,6 +272,8 @@ def main():
             report[name]['Duration'] = f"{duration:.2f} seconds"
 
             generate_html_report(report, args.report, steps, test_start_time, args.config_file)
+
+    generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
 if __name__ == "__main__":
     main()
