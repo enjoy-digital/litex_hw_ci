@@ -11,6 +11,13 @@
 
 Currently only tested with digilent arty 35t/100t target.
 
+[> Prerequisites
+-----------------
+
+`apt install kconfig-frontends`
+
+Ref: https://nuttx.apache.org/docs/latest/quickstart/install.html
+
 [> Details
 ----------
 
