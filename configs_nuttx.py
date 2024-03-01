@@ -6,12 +6,13 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig, LiteXCITest
+from litex_hw_ci import LiteXCIConfig, LiteXCITest, get_local_ip
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
-local_ip    = "192.168.1.50"
-remote_ip   = "192.168.1.128"
+local_ip  = "192.168.1.50"
+remote_ip = get_local_ip()
+
 tests = [
     LiteXCITest(send="reboot\n",                    sleep=1),
     LiteXCITest(keyword="Memtest OK",               timeout=60.0),

@@ -6,19 +6,19 @@
 # Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
 # SPDX-License-Identifier: BSD-2-Clause
 
-from litex_hw_ci import LiteXCIConfig, LiteXCITest
+from litex_hw_ci import LiteXCIConfig, LiteXCITest, get_local_ip
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
 # Notes:
-# Tested configs?:
-# - VexRiscv-SMP with 1, 2, 4 cores?
-# - VexRiscv-SMP with FPU?
-# - NaxRiscv 32-bit with FPU?
-# - NaxRiscv 64-bit with FPU?
+# Tested configs:
+# - VexRiscv 32-bit / 1 Core / Wishbone Bus.
+# - VexRiscv 32-bit / 2 Core / Wishbone Bus.
+# - NaxRiscv 32-bit / 1 Core / Wishbone Bus.
+# - NaxRiscv 64-bit / 1 Core / Wishbone Bus.
 
 local_ip    = "192.168.1.50"
-remote_ip   = "192.168.1.128"
+remote_ip   = get_local_ip()
 
 tests = [
     LiteXCITest(send="reboot\n",                sleep=1),

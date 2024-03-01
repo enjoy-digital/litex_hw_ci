@@ -12,12 +12,18 @@ import time
 import enum
 import shlex
 import serial
+import socket
 import datetime
 import argparse
 import subprocess
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
+
+# Helpers ------------------------------------------------------------------------------------------
+
+def get_local_ip():
+    return socket.gethostbyname(socket.gethostname())
 
 # LiteX CI Config Constants ------------------------------------------------------------------------
 
