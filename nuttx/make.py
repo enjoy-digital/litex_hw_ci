@@ -115,25 +115,27 @@ def main():
     # ------------
     if args.nuttx_clean:
         if nuttx_clean() != 0:
-            return
+            return 1
 
     # Nuttx Build.
     # ------------
     if args.nuttx_build:
         if nuttx_build() != 0:
-            return
+            return 1
 
     # TFTP-Prepare.
     # -------------
     if args.nuttx_prepare_tftp:
         if nuttx_prepare_tftp() != 0:
-            return
+            return 1
 
     # Copy-To-Build.
     # --------------
     if args.nuttx_copy_images:
         if nuttx_copy_images(soc_json=args.soc_json) != 0:
-            return
+            return 1
+
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
