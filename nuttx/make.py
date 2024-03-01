@@ -19,8 +19,7 @@ def nuttx_clean():
     ret = 0
     if os.path.exists("third_party/nuttx"):
         os.chdir("third_party/nuttx")
-        ret = os.system("make clean")
-        ret |= os.system("git clean -fdXx .")
+        ret = os.system("git clean -xfd .")
         os.chdir("../../")
     return ret
 
@@ -54,7 +53,7 @@ def nuttx_build():
     os.chdir("nuttx")
 
     # Configure Nuttx.
-    ret = subprocess.run("./tools/configure.sh -E -l arty_a7:netnsh", shell=True, env=env) # FIXME: dynamics target and config
+    ret = subprocess.run("./tools/configure.sh -E -l arty_a7:netnsh", shell=True, env=env) # FIXME: dynamics target and config
     if ret.returncode != 0:
         return ret
 
