@@ -174,7 +174,7 @@ def enum_to_str(enum_val):
         return enum_val.name
     return str(enum_val)
 
-def generate_html_report(report, report_filename, steps, start_time, configs_file):
+def generate_html_report(report, report_filename, steps, start_time, config_file):
     env      = Environment(loader=FileSystemLoader(searchpath='./'))
     template = env.get_template('html/report_template.html')
 
@@ -190,7 +190,7 @@ def generate_html_report(report, report_filename, steps, start_time, configs_fil
     total_seconds     = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
     hours, remainder  = divmod(total_seconds, 3600)
     minutes, seconds  = divmod(remainder, 60)
-    summary  = f"<p>Build Start Time: {start_time} | Configs File: {configs_file}</p>"
+    summary  = f"<p>Build Start Time: {start_time} | Configs File: {config_file}</p>"
     summary += f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
 
     # Render the HTML template with the report data and summary.
@@ -207,14 +207,14 @@ def format_name(name):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX HW CI")
-    parser.add_argument("configs_file",                    help="Path to the configurations file.")
+    parser.add_argument("config_file",                     help="Path to the configurations file.")
     parser.add_argument("--report",                        help="Filename for the HTML report. If not specified, it defaults to the basename of the config file with .html extension.")
     parser.add_argument("--config",                        help="Select specific configuration from file (optional).")
     parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
     args = parser.parse_args()
 
     if not args.report:
-        base_name = os.path.basename(args.configs_file)
+        base_name = os.path.basename(args.config_file)
         args.report = f"{os.path.splitext(base_name)[0]}.html"
 
     # Capture the start time.
@@ -222,7 +222,7 @@ def main():
 
     # Import litex_ci_configs from the specified config file.
     try:
-        config_module = __import__(args.configs_file.replace(".py", "").replace("/", "."), fromlist=[''])
+        config_module = __import__(args.config_file.replace(".py", "").replace("/", "."), fromlist=[''])
         litex_ci_configs = config_module.litex_ci_configs
     except ImportError as e:
         print(f"Error: {e}\nConfigurations file '{args.config_file}' not found or doesn't define 'litex_ci_configs'.")
@@ -247,7 +247,7 @@ def main():
 
     # Generate empty HTML report.
     os.system("cp html/report.css ./")
-    generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
+    generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
     # Iterate on configurations and progressively update report.
     for name, config in litex_ci_configs.items():
@@ -265,7 +265,7 @@ def main():
             report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
             report[name]['Duration'] = f"{duration:.2f} seconds"
 
-            generate_html_report(report, args.report, steps, test_start_time, args.configs_file)
+            generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
 if __name__ == "__main__":
     main()
