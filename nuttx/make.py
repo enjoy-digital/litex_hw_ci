@@ -20,6 +20,7 @@ def nuttx_clean():
     if os.path.exists("third_party/nuttx"):
         os.chdir("third_party/nuttx")
         ret = os.system("make clean")
+        ret |= os.system("git clean -fdXx .")
         os.chdir("../../")
     return ret
 
