@@ -13,6 +13,16 @@ def create_third_party_dir():
     if not os.path.exists("third_party"):
         os.makedirs("third_party")
 
+def copy_file(src, dst):
+    try:
+        shutil.copyfile(src, dst)
+    except shutil.SameFileError as err:
+        return 1
+    except IOError as err:
+        return 1
+    return 0
+
+
 # Linux Build --------------------------------------------------------------------------------------
 
 def linux_clean():
@@ -41,17 +51,22 @@ def linux_build(cpu_type, xlen=32, with_usb=False):
             return ret
     os.chdir("buildroot")
 
+    # Prepare env (LD_LIBRARY_PATH is forbidden)
+    env = os.environ
+    if "LD_LIBRARY_PATH" in env:
+        env.pop("LD_LIBRARY_PATH")
+
     # Configure Buildroot.
-    ret = os.system(f"make BR2_EXTERNAL=../../buildroot/ litex_{cpu_type}_defconfig")
-    if ret != 0:
+    ret = subprocess.run(f"make BR2_EXTERNAL=../../buildroot/ litex_{cpu_type}_defconfig", shell=True, env=env)
+    if ret.returncode != 0:
         return ret
 
     # Build Linux Images.
-    ret = os.system("make")
+    ret = subprocess.run("make", shell=True, env=env)
 
     # Go back to repo root directory.
     os.chdir("../../")
-    return ret
+    return ret.returncode
 
 def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
     ret = os.system(f"cp images/* /tftpboot/")
@@ -69,10 +84,14 @@ def linux_copy_images(soc_json):
     # extracts files to copy from boot.json and copy it
     with open(os.path.join("images", "boot.json")) as json_file:
         json_content = json.load(json_file)
-        ret = os.system(f"cp images/boot.json {images_dir}/")
+        ret = copy_file("images/boot.json", f"{images_dir}/{boot.json}")
+        if ret != 0:
+            return ret
         for f in json_content.keys():
-            ret |= os.system(f"cp images/{f} {images_dir}/")
-    return ret
+            ret = copy_file(f"images/{f}", "{images_dir}/{f}")
+            if ret != 0:
+                return ret
+    return 0
 
 # Device Tree --------------------------------------------------------------------------------------
 
@@ -96,7 +115,11 @@ def compile_dts(soc_json, symbols=False):
     base_dir = os.path.dirname(soc_json)
     dts      = os.path.join(base_dir, "soc.dts")
     dtb      = os.path.join(base_dir, "soc.dtb")
-    subprocess.check_call(f"dtc {'-@' if symbols else ''} -O dtb -o {dtb} {dts}", shell=True)
+    try:
+        subprocess.check_call(f"dtc {'-@' if symbols else ''} -O dtb -o {dtb} {dts}", shell=True)
+    except subprocess.CalledProcessError as err:
+        return err.returncode
+    return 0
 
 # DTB combination --------------------------------------------------------------------------
 
@@ -105,9 +128,13 @@ def combine_dtb(soc_json, overlays=""):
     dtb_in   = os.path.join(base_dir, "soc.dtb")
     dtb_out  = os.path.join(base_dir, "soc_combined.dtb")
     if overlays == "":
-        shutil.copyfile(dtb_in, dtb_out)
+        ret = copy_file(dtb_in, dtb_out)
     else:
-        subprocess.check_call(f"fdtoverlay -i {dtb_in} -o {dtb_out} {overlays}", shell=True)
+        try:
+            ret = subprocess.check_call(f"fdtoverlay -i {dtb_in} -o {dtb_out} {overlays}", shell=True)
+        except subprocess.CalledProcessError as err:
+            ret = err.returncode
+    return ret
 
 # DTB copy ---------------------------------------------------------------------------------
 
@@ -115,10 +142,12 @@ def copy_dtb(soc_json):
     base_dir = os.path.dirname(soc_json)
     dtb_in   = os.path.join(base_dir, "soc.dtb")
     dtb_out  = os.path.join("images", "soc.dtb")
-    shutil.copyfile(dtb_in, dtb_out)
+    ret = copy_file(dtb_in, dtb_out)
+    if ret != 0:
+        return ret
     dtb_in   = os.path.join(base_dir, "soc_combined.dtb")
     dtb_out  = os.path.join("images", "soc_combined.dtb")
-    shutil.copyfile(dtb_in, dtb_out)
+    return copy_file(dtb_in, dtb_out)
 
 # Main ---------------------------------------------------------------------------------------------
 
@@ -149,6 +178,8 @@ def main():
 
     args = parser.parse_args()
 
+    assert args.soc_json is not None
+
     # Extract information from json file.
     # -----------------------------------
     with open(args.soc_json) as json_file:
@@ -167,14 +198,18 @@ def main():
     # ------------------
     if args.linux_generate_dtb:
         generate_dts(args.soc_json, rootfs=args.rootfs)
-        compile_dts(args.soc_json)
-        combine_dtb(args.soc_json)
-        copy_dtb(args.soc_json)
+        if compile_dts(args.soc_json) != 0:
+            return 1
+        if combine_dtb(args.soc_json) != 0:
+            return 1
+        if copy_dtb(args.soc_json) != 0:
+            return 1
 
     # Linux Build.
     # ------------
     if args.linux_build:
-        shutil.copyfile(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json")
+        if copy_file(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json") != 0:
+            return 1
         if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
             return 1
 
@@ -187,7 +222,8 @@ def main():
     # Copy-Images.
     # ------------
     if args.linux_copy_images:
-        linux_copy_images(soc_json=args.soc_json)
+        if linux_copy_images(soc_json=args.soc_json) != 0:
+            return 1
 
     return 0
 
