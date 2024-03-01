@@ -101,3 +101,15 @@ a:hover {
     color: #b9f6ca;
     text-decoration: underline;
 }
+
+td.status-BUILD_ERROR a:link,
+td.status-BUILD_ERROR a:visited,
+td.status-BUILD_ERROR a:hover,
+td.status-LOAD_ERROR  a:link,
+td.status-LOAD_ERROR  a:visited,
+td.status-LOAD_ERROR  a:hover,
+td.status-TEST_ERROR  a:link,
+td.status-TEST_ERROR  a:visited,
+td.status-TEST_ERROR  a:hover {
+    color: #ff1744
+}
