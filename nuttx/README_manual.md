@@ -1,8 +1,8 @@
 # Nuttx on LiteX
 
-## Install
+## Install
 
-### Env
+### Env
 
 - `apt install kconfig-frontends`
 - must have a riscv toolchain (debian's riscv64-unknown seems not working (missing math.h). sifive's toolchain is fine.)
@@ -18,14 +18,14 @@ cd somewhere/nuttxOnLiteX
 # Clone nuttx.
 git clone https://github.com/apache/nuttx.git nuttx
 
-# Clone apps (warning: must be called apps to respect default path).
+# Clone apps (warning: must be called apps to respect default path).
 git clone https://github.com/apache/nuttx-apps apps
 ```
 
 **Note**
 For titanium board patch *nuttx_on_titanium.patch* must be applied (different phy).
 
-## Nuttx: Init/config/compile
+## Nuttx: Init/config/compile
 
 ```
 cd nuttx
@@ -69,7 +69,7 @@ make -j
 cd nuttx.bin /tftpboot/boot.bin
 ```
 
-## LiteX
+## LiteX
 
 ```
 python -m digilent_arty.py --with-ethernet --with-sdcard --cpu-type=vexriscv --cpu-variant=secure --uart-baudrate 1000000 --build --load
