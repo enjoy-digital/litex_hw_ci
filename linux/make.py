@@ -218,7 +218,8 @@ def main():
     # Linux Build.
     # ------------
     if args.linux_build:
-        if copy_file(f"images/boot_rootfs_{args.rootfs}.json", "images/boot.json") != 0:
+        extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
+        if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return 1
         if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
             return 1
