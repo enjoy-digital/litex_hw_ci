@@ -186,7 +186,17 @@ def main():
         json_content = json.load(json_file)
         with_usb  = "usb_ohci_ctrl" in json_content["memories"]
         xlen      = {True: 32, False: 64}[json_content["constants"]["config_cpu_isa"].startswith("rv32")]
-        cpu_type  = {True: "vexriscv", False: "naxriscv"}[json_content["constants"]["config_cpu_human_name"].startswith("vexriscv")]
+
+        cpu_type = json_content["constants"]["config_cpu_human_name"]
+        if cpu_type.startswith("vexriscv"):
+            cpu_type = "vexriscv"
+        elif cpu_type.startswith("naxriscv"):
+            cpu_type = "naxriscv"
+        elif cpu_type.startswith("rocket"):
+            cpu_type = "rocket"
+        else:
+            print(f"Error: unknown cpu_type {cpu_type}")
+            return 1
 
     # Linux Clean.
     # ------------
