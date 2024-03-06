@@ -8,7 +8,7 @@ import argparse
 import subprocess
 import contextlib
 
-# Helpers ------------------------------------------------------------------------------------------
+# Helpers /Constants -------------------------------------------------------------------------------
 
 def copy_file(src, dst):
     try:
@@ -32,12 +32,10 @@ def switch_dir(path):
 # Linux Build --------------------------------------------------------------------------------------
 
 def linux_clean():
-    ret = 0
     if os.path.exists("third_party/buildroot"):
-        os.chdir("third_party/buildroot")
-        ret = os.system("make clean")
-        os.chdir("../../")
-    return ret
+        with switch_dir("third_party/buildroot"):
+           return subprocess.run(["make", "clean"]).returncode
+    return 0
 
 def linux_build(cpu_type, xlen=32, with_usb=False):
     # naxriscv may be configured in 32 or 64bits mode
@@ -113,7 +111,8 @@ def linux_copy_images(soc_json):
 
 from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
 
-# DTS generation ---------------------------------------------------------------------------
+# DTS generation.
+# ---------------
 
 def generate_dts(soc_json, rootfs="ram0"):
     base_dir = os.path.dirname(soc_json)
@@ -125,7 +124,8 @@ def generate_dts(soc_json, rootfs="ram0"):
 
 
 
-# DTS compilation --------------------------------------------------------------------------
+# DTS compilation.
+# ----------------
 
 def compile_dts(soc_json, symbols=False):
     base_dir = os.path.dirname(soc_json)
@@ -137,7 +137,8 @@ def compile_dts(soc_json, symbols=False):
         return err.returncode
     return 0
 
-# DTB combination --------------------------------------------------------------------------
+# DTB combination.
+# ----------------
 
 def combine_dtb(soc_json, overlays=""):
     base_dir = os.path.dirname(soc_json)
@@ -152,7 +153,8 @@ def combine_dtb(soc_json, overlays=""):
             ret = err.returncode
     return ret
 
-# DTB copy ---------------------------------------------------------------------------------
+# DTB copy.
+# ---------
 
 def copy_dtb(soc_json):
     base_dir = os.path.dirname(soc_json)
@@ -180,17 +182,21 @@ def main():
     description = "LiteX Hardware CI Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    # SoC/Board.
-    parser.add_argument("--soc-json",                                      help="SoC JSON file.")
-    # RootFS.
-    parser.add_argument("--rootfs",               default="ram0",          help="Location of the RootFS: ram0 or mmcblk0p2")
+    # SoC Arguments.
+    # --------------
+    parser.add_argument("--soc-json",                                help="SoC JSON file.")
 
-    # Linux.
-    parser.add_argument("--linux-clean",          action="store_true",     help="Clean Linux Build.")
-    parser.add_argument("--linux-build",          action="store_true",     help="Build Linux Images (through Buildroot) and Device Tree.")
-    parser.add_argument("--linux-generate-dtb",   action="store_true",     help="Prepare device tree.")
-    parser.add_argument("--linux-prepare-tftp",   action="store_true",     help="Prepare/Copy Linux Images to TFTP root directory.")
-    parser.add_argument("--linux-copy-images",    action="store_true",     help="Copy Linux Images to target build directory.")
+    # RootFS Arguments.
+    # -----------------
+    parser.add_argument("--rootfs",             default="ram0",      help="Location of the RootFS: ram0 or mmcblk0p2")
+
+    # Linux Arguments.
+    # ----------------
+    parser.add_argument("--linux-clean",        action="store_true", help="Clean Linux Build.")
+    parser.add_argument("--linux-build",        action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
+    parser.add_argument("--linux-generate-dtb", action="store_true", help="Prepare device tree.")
+    parser.add_argument("--linux-prepare-tftp", action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
+    parser.add_argument("--linux-copy-images",  action="store_true", help="Copy Linux Images to target build directory.")
 
     args = parser.parse_args()
 
