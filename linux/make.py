@@ -202,6 +202,18 @@ def main():
 
     assert args.soc_json is not None
 
+    # ErrorsCode.
+    # -----------
+
+    class ErrorCode(IntEnum):
+        SUCCESS            = 0
+        CONFIG_ERROR       = 1
+        CLEAN_ERROR        = 2
+        DTS_ERRROR         = 3
+        BUILD_ERROR        = 4
+        TFTP_ERROR         = 5
+        COPY_ERROR         = 6
+
     # Extract information from json file.
     # -----------------------------------
     with open(args.soc_json) as json_file:
@@ -218,47 +230,47 @@ def main():
             cpu_type = "rocket"
         else:
             print(f"Error: unknown cpu_type {cpu_type}")
-            return 1
+            return ErrorCode.CONFIG_ERROR
 
     # Linux Clean.
     # ------------
     if args.linux_clean:
         if linux_clean() != 0:
-            return 1
+            return ErrorCode.CLEAN_ERROR
 
     # Device Tree Build.
     # ------------------
     if args.linux_generate_dtb:
         generate_dts(args.soc_json, rootfs=args.rootfs)
         if compile_dts(args.soc_json) != 0:
-            return 1
+            return ErrorCode.DTS_ERROR
         if combine_dtb(args.soc_json) != 0:
-            return 1
+            return ErrorCode.DTS_ERROR
         if copy_dtb(args.soc_json) != 0:
-            return 1
+            return ErrorCode.DTS_ERROR
 
     # Linux Build.
     # ------------
     if args.linux_build:
         extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
-            return 1
+            return ErrorCode.BUILD_ERROR
         if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
-            return 1
+            return ErrorCode.BUILD_ERROR
 
     # TFTP-Prepare.
     # -------------
     if args.linux_prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
-            return 1
+            return ErrorCode.TFTP_ERROR
 
     # Copy-Images.
     # ------------
     if args.linux_copy_images:
         if linux_copy_images(soc_json=args.soc_json) != 0:
-            return 1
+            return ErrorCode.COPY_ERROR
 
-    return 0
+    return ErrorCode.SUCCESS
 
 if __name__ == "__main__":
     sys.exit(main())
