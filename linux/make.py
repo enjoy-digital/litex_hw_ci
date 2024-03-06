@@ -45,12 +45,10 @@ def linux_clean():
            return subprocess.run(["make", "clean"]).returncode
     return 0
 
-def linux_build(cpu_type, xlen=32, with_usb=False):
+def linux_build(cpu_type, xlen=32):
     # naxriscv may be configured in 32 or 64bits mode
     if cpu_type == "naxriscv":
         cpu_type = f"{cpu_type}_{xlen}"
-    elif with_usb:
-        cpu_type = f"{cpu_type}_usbhost"
 
     # Create Third-Party directory (if not present) and switch to it.
     os.makedirs("third_party", exist_ok=True)
@@ -226,8 +224,7 @@ def main():
     # -----------------------------------
     with open(args.soc_json) as json_file:
         json_content = json.load(json_file)
-        with_usb  = "usb_ohci_ctrl" in json_content["memories"]
-        xlen      = {True: 32, False: 64}[json_content["constants"]["config_cpu_isa"].startswith("rv32")]
+        xlen = {True: 32, False: 64}[json_content["constants"]["config_cpu_isa"].startswith("rv32")]
 
         cpu_type = json_content["constants"]["config_cpu_human_name"]
         if cpu_type.startswith("vexriscv"):
@@ -263,7 +260,7 @@ def main():
         extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
-        if linux_build(cpu_type, xlen=xlen, with_usb=with_usb) != 0:
+        if linux_build(cpu_type, xlen=xlen) != 0:
             return ErrorCode.BUILD_ERROR
 
     # TFTP-Prepare.
