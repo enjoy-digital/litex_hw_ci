@@ -189,7 +189,7 @@ def main():
 
     # SoC Arguments.
     # --------------
-    parser.add_argument("soc-json",                                  help="SoC JSON file.")
+    parser.add_argument("soc_json",                                  help="SoC JSON file.")
 
     # RootFS Arguments.
     # -----------------
