@@ -9,69 +9,80 @@
 import os
 import sys
 import json
-import argparse
 import shutil
+import argparse
 import subprocess
+import contextlib
 
+from enum import IntEnum
 # Helpers ------------------------------------------------------------------------------------------
 
-def create_third_party_dir():
-    if not os.path.exists("third_party"):
-        os.makedirs("third_party")
+@contextlib.contextmanager
+def switch_dir(path):
+    # Save the original working directory.
+    original_dir = os.getcwd()
+    try:
+        # Change to the provided directory.
+        os.chdir(path)
+        yield
+    finally:
+        # Restore the orignal directory.
+        os.chdir(original_dir)
 
-# Linux Build --------------------------------------------------------------------------------------
+# NuttX Build --------------------------------------------------------------------------------------
+
+toolchain_name = "xpack-riscv-none-elf-gcc-12.3.0-1"
+gcc_url        = f"https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v12.3.0-1/{toolchain_name}-linux-x64.tar.gz"
+tftp_root      = "/tftpboot"
 
 def nuttx_clean():
-    ret = 0
     if os.path.exists("third_party/nuttx"):
-        os.chdir("third_party/nuttx")
-        ret = os.system("git clean -xfd .")
-        os.chdir("../../")
-    return ret
+        with switch_dir("third_party/nuttx"):
+           return subprocess.run(["git", "clean", "-xfd", "."]).returncode
+    return 0
 
 def nuttx_build():
-    toolchain_name = "xpack-riscv-none-elf-gcc-12.3.0-1"
 
-    # Be sure third_party dir is present and switch to it.
-    create_third_party_dir()
-    os.chdir("third_party")
 
-    # Get toolchain (debian/ubuntu fails with missing math.h)
-    if not os.path.exists(toolchain_name):
-        os.system(f"wget https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v12.3.0-1/{toolchain_name}-linux-x64.tar.gz")
-        os.system(f"tar -xf {toolchain_name}-linux-x64.tar.gz") 
-    # Get Nuttx.
-    if not os.path.exists("nuttx"):
-        ret = os.system("git clone --depth 1 --single-branch https://github.com/apache/nuttx")
-        if ret != 0:
-            return ret
-    # Get Nuttx-apps.
-    if not os.path.exists("apps"):
-        ret = os.system("git clone --depth 1 --single-branch https://github.com/apache/nuttx-apps apps")
-        if ret != 0:
-            return ret
+    # Create Third-Party directory (if not present) and switch to it.
+    os.makedirs("third_party", exist_ok=True)
+    with switch_dir("third_party"):
+        # Get toolchain (debian/ubuntu fails with missing math.h).
+        if not os.path.exists(toolchain_name):
+            os.system(f"wget {gcc_url}")
+            os.system(f"tar -xf {toolchain_name}-linux-x64.tar.gz")
 
-    # Pepare environment.
-    gcc_path    = os.path.join(os.path.abspath(toolchain_name), "bin")
-    env         = os.environ.copy()
-    env["PATH"] = f"{gcc_path}" + os.pathsep + env["PATH"]
+        # Get NuttX.
+        if not os.path.exists("nuttx"):
+            ret = os.system("git clone --depth 1 --single-branch https://github.com/apache/nuttx")
+            if ret != 0:
+                return ret
 
-    os.chdir("nuttx")
+        # Get Nuttx-apps.
+        if not os.path.exists("apps"):
+            ret = os.system("git clone --depth 1 --single-branch https://github.com/apache/nuttx-apps apps")
+            if ret != 0:
+                return ret
 
-    # Configure Nuttx.
-    ret = subprocess.run("./tools/configure.sh -E -l arty_a7:netnsh", shell=True, env=env) # FIXME: dynamics target and config
-    if ret.returncode != 0:
-        return ret
+        # Prepare environment.
+        gcc_path    = os.path.join(os.path.abspath(toolchain_name), "bin")
+        env         = os.environ.copy()
+        env["PATH"] = f"{gcc_path}" + os.pathsep + env["PATH"]
 
-    # Build Nuttx Images.
-    ret = subprocess.run("make CC=riscv-none-elf-gcc V=2 -j", shell=True, env=env)
+        # Switch to NuttX directory.
+        with switch_dir("nuttx"):
+            # Configure Nuttx.
+            ret = subprocess.run("./tools/configure.sh -E -l arty_a7:netnsh", shell=True, env=env) # FIXME: dynamics target and config
+            if ret.returncode != 0:
+                return ret
 
-    # Go back to repo root directory.
-    os.chdir("../../")
-    return ret.returncode
+            # Build Nuttx Images.
+            ret = subprocess.run("make CC=riscv-none-elf-gcc V=2 -j", shell=True, env=env)
+
+            return ret.returncode
 
 # FIXME: force /tftpboot cleanup ?
-def nuttx_prepare_tftp(tftp_root="/tftpboot"):
+def nuttx_prepare_tftp(tftp_root=tftp_root):
     # Sanity check.
     for f in ["boot.json", "boot.bin"]:
         if os.path.exists(os.path.join(tftp_root, f)):
@@ -90,7 +101,6 @@ def nuttx_copy_images(soc_json):
 
     return os.system(f"cp third_party/nuttx/nuttx.bin {images_dir}/")
 
-
 # Main ---------------------------------------------------------------------------------------------
 
 def main():
@@ -108,7 +118,7 @@ def main():
 
     # SoC Arguments.
     # --------------
-    parser.add_argument("soc_json",                                        help="SoC JSON file.")
+    parser.add_argument("soc_json",                                  help="SoC JSON file.")
 
     # Build Arguments.
     # ----------------
