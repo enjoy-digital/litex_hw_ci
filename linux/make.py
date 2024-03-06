@@ -207,7 +207,6 @@ def main():
 
     # ErrorsCode.
     # -----------
-
     class ErrorCode(IntEnum):
         SUCCESS            = 0
         CONFIG_ERROR       = 1
@@ -260,8 +259,8 @@ def main():
         if linux_build(cpu_type) != 0:
             return ErrorCode.BUILD_ERROR
 
-    # TFTP-Prepararation.
-    # -------------------
+    # TFTP-Prepare.
+    # -------------
     if args.prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return ErrorCode.TFTP_ERROR

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+#
+# This file is part of LiteX-HW-CI.
+#
+# Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
+# SPDX-License-Identifier: BSD-2-Clause
+
 import os
 import sys
 import json
@@ -93,48 +99,62 @@ def main():
                                    / /  (_) /____ | |/_/
                                   / /__/ / __/ -_)>  <
                                  /____/_/\\__/\\__/_/|_|
-                              LiteX Hardware CI/Linux Tests.
+                              LiteX Hardware CI/NuttX Tests.
 
-                      Copyright 2024 / Enjoy-Digital and LiteX developers.
+                      Copyright 2024 / Enjoy-Digital <enjoy-digital.fr>
 """)
-    description = "LiteX Hardware CI Tests.\n\n"
+    description = "LiteX Hardware CI/NuttX Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
-    # SoC/Board.
-    parser.add_argument("--soc-json",                                      help="SoC JSON file.")
-    # Nuttx.
-    parser.add_argument("--nuttx-clean",          action="store_true",     help="Clean Nuttx Build.")
-    parser.add_argument("--nuttx-build",          action="store_true",     help="Build Nuttx Images.")
-    parser.add_argument("--nuttx-prepare-tftp",   action="store_true",     help="Prepare/Copy Nuttx Images to TFTP root directory.")
-    parser.add_argument("--nuttx-copy-images",    action="store_true",     help="Copy Nuttx Images to target build directory.")
+    # SoC Arguments.
+    # --------------
+    parser.add_argument("soc_json",                                        help="SoC JSON file.")
+
+    # Build Arguments.
+    # ----------------
+    parser.add_argument("--clean",          action="store_true",     help="Clean Nuttx Build.")
+    parser.add_argument("--build",          action="store_true",     help="Build Nuttx Images.")
+    parser.add_argument("--prepare-tftp",   action="store_true",     help="Prepare/Copy Nuttx Images to TFTP root directory.")
+    parser.add_argument("--copy-images",    action="store_true",     help="Copy Nuttx Images to target build directory.")
 
     args = parser.parse_args()
 
+    # ErrorsCode.
+    # -----------
+    class ErrorCode(IntEnum):
+        SUCCESS            = 0
+        CONFIG_ERROR       = 1
+        CLEAN_ERROR        = 2
+        DTS_ERRROR         = 3
+        BUILD_ERROR        = 4
+        TFTP_ERROR         = 5
+        COPY_ERROR         = 6
+
     # Nuttx Clean.
     # ------------
-    if args.nuttx_clean:
+    if args.clean:
         if nuttx_clean() != 0:
-            return 1
+            return ErrorCode.CLEAN_ERROR
 
     # Nuttx Build.
     # ------------
-    if args.nuttx_build:
+    if args.build:
         if nuttx_build() != 0:
-            return 1
+            return ErrorCode.BUILD_ERROR
 
     # TFTP-Prepare.
     # -------------
-    if args.nuttx_prepare_tftp:
+    if args.prepare_tftp:
         if nuttx_prepare_tftp() != 0:
-            return 1
+            return ErrorCode.TFTP_ERROR
 
-    # Copy-To-Build.
-    # --------------
-    if args.nuttx_copy_images:
+    # Images Copy.
+    # ------------
+    if args.copy_images:
         if nuttx_copy_images(soc_json=args.soc_json) != 0:
-            return 1
+            return ErrorCode.COPY_ERROR
 
-    return 0
+    return ErrorCode.SUCCESS
 
 if __name__ == "__main__":
     sys.exit(main())
