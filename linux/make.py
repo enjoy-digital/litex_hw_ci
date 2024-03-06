@@ -45,11 +45,7 @@ def linux_clean():
            return subprocess.run(["make", "clean"]).returncode
     return 0
 
-def linux_build(cpu_type, xlen=32):
-    # naxriscv may be configured in 32 or 64bits mode
-    if cpu_type == "naxriscv":
-        cpu_type = f"{cpu_type}_{xlen}"
-
+def linux_build(cpu_type):
     # Create Third-Party directory (if not present) and switch to it.
     os.makedirs("third_party", exist_ok=True)
     with switch_dir("third_party"):
@@ -224,13 +220,13 @@ def main():
     # -----------------------------------
     with open(args.soc_json) as json_file:
         json_content = json.load(json_file)
-        xlen = {True: 32, False: 64}[json_content["constants"]["config_cpu_isa"].startswith("rv32")]
-
         cpu_type = json_content["constants"]["config_cpu_human_name"]
         if cpu_type.startswith("vexriscv"):
             cpu_type = "vexriscv"
-        elif cpu_type.startswith("naxriscv"):
-            cpu_type = "naxriscv"
+        elif cpu_type.startswith("naxriscv 32-bit"):
+            cpu_type = "naxriscv_32"
+        elif cpu_type.startswith("naxriscv 64-bit"):
+            cpu_type = "naxriscv_64"
         elif cpu_type.startswith("rocket"):
             cpu_type = "rocket"
         else:
@@ -260,7 +256,7 @@ def main():
         extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
-        if linux_build(cpu_type, xlen=xlen) != 0:
+        if linux_build(cpu_type) != 0:
             return ErrorCode.BUILD_ERROR
 
     # TFTP-Prepare.
