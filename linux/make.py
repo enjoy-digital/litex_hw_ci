@@ -189,7 +189,7 @@ def main():
 
     # SoC Arguments.
     # --------------
-    parser.add_argument("--soc-json",                                help="SoC JSON file.")
+    parser.add_argument("soc-json",                                  help="SoC JSON file.")
 
     # RootFS Arguments.
     # -----------------
@@ -204,8 +204,6 @@ def main():
     parser.add_argument("--linux-copy-images",  action="store_true", help="Copy Linux Images to target build directory.")
 
     args = parser.parse_args()
-
-    assert args.soc_json is not None
 
     # ErrorsCode.
     # -----------
