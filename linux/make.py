@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+#
+# This file is part of LiteX-HW-CI.
+#
+# Copyright (c) 2024 Enjoy-Digital <enjoy-digital.fr>
+# SPDX-License-Identifier: BSD-2-Clause
+
 import os
 import sys
 import json
@@ -7,6 +13,8 @@ import shutil
 import argparse
 import subprocess
 import contextlib
+
+from enum import IntEnum
 
 # Helpers /Constants -------------------------------------------------------------------------------
 
@@ -177,9 +185,9 @@ def main():
                                  /____/_/\\__/\\__/_/|_|
                               LiteX Hardware CI/Linux Tests.
 
-                      Copyright 2024 / Enjoy-Digital and LiteX developers.
+                      Copyright 2024 / Enjoy-Digital <enjoy-digital.fr>
 """)
-    description = "LiteX Hardware CI Tests.\n\n"
+    description = "LiteX Hardware CI/Linux Tests.\n\n"
     parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
 
     # SoC Arguments.
