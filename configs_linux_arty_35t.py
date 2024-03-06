@@ -19,6 +19,8 @@ from litex_hw_ci import LiteXCIConfig, LiteXCITest, get_local_ip
 local_ip    = "192.168.1.50"
 remote_ip   = get_local_ip()
 
+linux_build_args = "--clean --build --generate-dtb --prepare-tftp --copy-images"
+
 tests = [
     LiteXCITest(send="reboot\n",                sleep=1),
     LiteXCITest(keyword="Memtest OK",           timeout=60.0),
@@ -46,7 +48,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_wishbone/soc.json --clean --build --generate-dtb --prepare-tftp",
+        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_wishbone/soc.json {linux_build_args}",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -69,7 +71,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_axi_lite/soc.json --clean --build --generate-dtb --prepare-tftp",
+        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_axi_lite/soc.json {linux_build_args}",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -92,7 +94,7 @@ litex_ci_configs = {
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
         --with-spi-sdcard \
         --with-usb",
-        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_axi/soc.json --clean --build --generate-dtb --prepare-tftp",
+        software_command = f"cd linux && python3 make.py ../build_arty_vexriscv_32_bit_axi/soc.json {linux_build_args}",
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
