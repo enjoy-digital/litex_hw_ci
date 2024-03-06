@@ -98,22 +98,4 @@ litex_ci_configs = {
         tty              = "/dev/ttyUSB1",
         tests            = tests,
     ),
-    # Digilent Arty running Rocket with:
-    # - 1 Core
-    # - Ethernet 100Mbps
-    # - SPI-SDCard through Digilent PMOD on PMOD D formated as Fat32.
-    "arty_rocket_1_core" : LiteXCIConfig(
-        target           = "digilent_arty",
-        gateware_command = f"--sys-clk-freq 50e6 \
-        --variant a7-100 \
-        --cpu-type=rocket --cpu-num-cores=1 --cpu-variant=linux \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip} \
-        --with-spi-sdcard",
-        software_command = f"cd linux && python3 make.py --soc-json=../build_arty_rocket_1_core/soc.json --linux-clean --linux-build --linux-generate-dtb --linux-prepare-tftp",
-        setup_command    = "",
-        exit_command     = "",
-        tty              = "/dev/ttyUSB1",
-        tests            = tests,
-    ),
-
 }
