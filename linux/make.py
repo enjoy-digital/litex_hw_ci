@@ -39,6 +39,9 @@ def switch_dir(path):
 
 # Linux Build --------------------------------------------------------------------------------------
 
+buildroot_url = "http://github.com/buildroot/buildroot"
+tftp_root     = "/tftpboot"
+
 def linux_clean():
     if os.path.exists("third_party/buildroot"):
         with switch_dir("third_party/buildroot"):
@@ -51,7 +54,7 @@ def linux_build(cpu_type):
     with switch_dir("third_party"):
         # Get Buildroot.
         if not os.path.exists("buildroot"):
-            ret = os.system("git clone --depth 1 --single-branch -b master http://github.com/buildroot/buildroot")
+            ret = os.system(f"git clone --depth 1 --single-branch -b master {buildroot_url}")
             if ret != 0:
                 return ret
 
@@ -72,9 +75,9 @@ def linux_build(cpu_type):
 
             return ret.returncode
 
-def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
-    ret = os.system(f"cp images/* /tftpboot/")
-    ret |= os.system(f"cp images/boot_rootfs_{rootfs}.json /tftpboot/boot.json")
+def linux_prepare_tftp(tftp_root=tftp_root, rootfs="ram0"):
+    ret  = os.system(f"cp images/* {tftp_root}/")
+    ret |= os.system(f"cp images/boot_rootfs_{rootfs}.json {tftp_root}/boot.json")
     return ret
 
 def linux_copy_images(soc_json):
@@ -253,7 +256,7 @@ def main():
     # Linux Build.
     # ------------
     if args.linux_build:
-        extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
+        extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"] # FIXME: Avoid/Remove.
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
         if linux_build(cpu_type) != 0:
