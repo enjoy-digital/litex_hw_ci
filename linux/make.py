@@ -3,15 +3,12 @@
 import os
 import sys
 import json
-import argparse
 import shutil
+import argparse
 import subprocess
+import contextlib
 
 # Helpers ------------------------------------------------------------------------------------------
-
-def create_third_party_dir():
-    if not os.path.exists("third_party"):
-        os.makedirs("third_party")
 
 def copy_file(src, dst):
     try:
@@ -19,6 +16,18 @@ def copy_file(src, dst):
     except Exception as err:
         return 1
     return 0
+
+@contextlib.contextmanager
+def switch_dir(path):
+    # Save the original working directory.
+    original_dir = os.getcwd()
+    try:
+        # Change to the provided directory.
+        os.chdir(path)
+        yield
+    finally:
+        # Restore the orignal directory.
+        os.chdir(original_dir)
 
 # Linux Build --------------------------------------------------------------------------------------
 
@@ -37,33 +46,31 @@ def linux_build(cpu_type, xlen=32, with_usb=False):
     elif with_usb:
         cpu_type = f"{cpu_type}_usbhost"
 
-    # Be sure third_party dir is present and switch to it.
-    create_third_party_dir()
-    os.chdir("third_party")
+    # Create Third-Party directory (if not present) and switch to it.
+    os.makedirs("third_party", exist_ok=True)
+    with switch_dir("third_party"):
+        # Get Buildroot.
+        if not os.path.exists("buildroot"):
+            ret = os.system("git clone --depth 1 --single-branch -b master http://github.com/buildroot/buildroot")
+            if ret != 0:
+                return ret
 
-    # Get Buildroot.
-    if not os.path.exists("buildroot"):
-        ret = os.system("git clone --depth 1 --single-branch -b master http://github.com/buildroot/buildroot")
-        if ret != 0:
-            return ret
-    os.chdir("buildroot")
+        # Switch to Buildroot directory.
+        with switch_dir("buildroot"):
+            # Prepare env (LD_LIBRARY_PATH is forbidden).
+            env = os.environ
+            if "LD_LIBRARY_PATH" in env:
+                env.pop("LD_LIBRARY_PATH")
 
-    # Prepare env (LD_LIBRARY_PATH is forbidden)
-    env = os.environ
-    if "LD_LIBRARY_PATH" in env:
-        env.pop("LD_LIBRARY_PATH")
+            # Configure Buildroot.
+            ret = subprocess.run(f"make BR2_EXTERNAL=../../buildroot/ litex_{cpu_type}_defconfig", shell=True, env=env)
+            if ret.returncode != 0:
+                return ret
 
-    # Configure Buildroot.
-    ret = subprocess.run(f"make BR2_EXTERNAL=../../buildroot/ litex_{cpu_type}_defconfig", shell=True, env=env)
-    if ret.returncode != 0:
-        return ret
+            # Run Buildroot to generate Linux Images.
+            ret = subprocess.run("make", shell=True, env=env)
 
-    # Build Linux Images.
-    ret = subprocess.run("make", shell=True, env=env)
-
-    # Go back to repo root directory.
-    os.chdir("../../")
-    return ret.returncode
+            return ret.returncode
 
 def linux_prepare_tftp(tftp_root="/tftpboot", rootfs="ram0"):
     ret = os.system(f"cp images/* /tftpboot/")
@@ -74,20 +81,32 @@ def linux_copy_images(soc_json):
     base_dir   = os.path.dirname(soc_json)
     images_dir = os.path.join(base_dir, "images")
 
-    # Create target directory
-    if not os.path.exists(images_dir):
-        os.makedirs(images_dir)
+    # Create images directory.
+    os.makedirs(images_dir, exist_ok=True)
 
-    # extracts files to copy from boot.json and copy it
-    with open(os.path.join("images", "boot.json")) as json_file:
-        json_content = json.load(json_file)
-        ret = copy_file("images/boot.json", f"{images_dir}/{boot.json}")
-        if ret != 0:
-            return ret
-        for f in json_content.keys():
-            ret = copy_file(f"images/{f}", "{images_dir}/{f}")
-            if ret != 0:
-                return ret
+    # Path to boot.json within the images directory
+    boot_json_path = os.path.join("images", "boot.json")
+
+    # Copy boot.json to images directory.
+    try:
+        shutil.copyfile(boot_json_path, os.path.join(images_dir, "boot.json"))
+    except Exception as err:
+        return 1
+
+    # Copy files listed in boot.json to images directory.
+    try:
+        with open(boot_json_path, 'r') as json_file:
+            json_content = json.load(json_file)
+            for filename in json_content.keys():
+                src_path = os.path.join("images", filename)
+                dst_path = os.path.join(images_dir, filename)
+                try:
+                    shutil.copyfile(src_path, dst_path)
+                except Exception as err:
+                    return 1
+    except Exception as err:
+        return 1
+
     return 0
 
 # Device Tree --------------------------------------------------------------------------------------
