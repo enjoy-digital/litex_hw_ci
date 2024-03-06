@@ -195,13 +195,13 @@ def main():
     # -----------------
     parser.add_argument("--rootfs",             default="ram0",      help="Location of the RootFS: ram0 or mmcblk0p2")
 
-    # Linux Arguments.
+    # Build Arguments.
     # ----------------
-    parser.add_argument("--linux-clean",        action="store_true", help="Clean Linux Build.")
-    parser.add_argument("--linux-build",        action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
-    parser.add_argument("--linux-generate-dtb", action="store_true", help="Prepare device tree.")
-    parser.add_argument("--linux-prepare-tftp", action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
-    parser.add_argument("--linux-copy-images",  action="store_true", help="Copy Linux Images to target build directory.")
+    parser.add_argument("--clean",        action="store_true", help="Clean Linux Build.")
+    parser.add_argument("--build",        action="store_true", help="Build Linux Images (through Buildroot) and Device Tree.")
+    parser.add_argument("--generate-dtb", action="store_true", help="Prepare Linux Device Tree.")
+    parser.add_argument("--prepare-tftp", action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
+    parser.add_argument("--copy-images",  action="store_true", help="Copy Linux Images to target build directory.")
 
     args = parser.parse_args()
 
@@ -236,13 +236,13 @@ def main():
 
     # Linux Clean.
     # ------------
-    if args.linux_clean:
+    if args.clean:
         if linux_clean() != 0:
             return ErrorCode.CLEAN_ERROR
 
-    # Device Tree Build.
-    # ------------------
-    if args.linux_generate_dtb:
+    # Linux Device Tree Generation.
+    # -----------------------------
+    if args.generate_dtb:
         generate_dts(args.soc_json, rootfs=args.rootfs)
         if compile_dts(args.soc_json) != 0:
             return ErrorCode.DTS_ERROR
@@ -251,24 +251,24 @@ def main():
         if copy_dtb(args.soc_json) != 0:
             return ErrorCode.DTS_ERROR
 
-    # Linux Build.
-    # ------------
-    if args.linux_build:
+    #  Linux Build.
+    # -------------
+    if args.build:
         extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"] # FIXME: Avoid/Remove.
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
         if linux_build(cpu_type) != 0:
             return ErrorCode.BUILD_ERROR
 
-    # TFTP-Prepare.
-    # -------------
-    if args.linux_prepare_tftp:
+    # TFTP-Prepararation.
+    # -------------------
+    if args.prepare_tftp:
         if linux_prepare_tftp(rootfs=args.rootfs) != 0:
             return ErrorCode.TFTP_ERROR
 
-    # Copy-Images.
+    # Images Copy.
     # ------------
-    if args.linux_copy_images:
+    if args.copy_images:
         if linux_copy_images(soc_json=args.soc_json) != 0:
             return ErrorCode.COPY_ERROR
 
