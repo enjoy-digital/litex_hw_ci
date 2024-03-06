@@ -16,12 +16,9 @@ def create_third_party_dir():
 def copy_file(src, dst):
     try:
         shutil.copyfile(src, dst)
-    except shutil.SameFileError as err:
-        return 1
-    except IOError as err:
+    except Exception as err:
         return 1
     return 0
-
 
 # Linux Build --------------------------------------------------------------------------------------
 
