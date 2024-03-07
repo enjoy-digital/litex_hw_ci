@@ -15,6 +15,7 @@ import subprocess
 import contextlib
 
 from enum import IntEnum
+from datetime import datetime
 
 # Helpers /Constants -------------------------------------------------------------------------------
 
@@ -41,12 +42,33 @@ def switch_dir(path):
 
 buildroot_url = "http://github.com/buildroot/buildroot"
 tftp_root     = "/tftpboot"
+motd_path     = "buildroot/board/litex/rootfs_overlay/etc/motd"
 
 def linux_clean():
     if os.path.exists("third_party/buildroot"):
         with switch_dir("third_party/buildroot"):
            return subprocess.run(["make", "clean"]).returncode
     return 0
+
+def linux_generate_motd(cpu_type):
+    linux_on_litex_ascii_art = """
+   __   _                                  __   _ __      _  __
+  / /  (_)__  __ ____ _________  ___  ____/ /  (_) /____ | |/_/
+ / /__/ / _ \\/ // /\\ \\ /___/ _ \\/ _ \\/___/ /__/ / __/ -_)>  <
+/____/_/_//_/\\_,_//_\\_\\    \\___/_//_/   /____/_/\\__/\\__/_/|_|
+
+"""
+    # Create Motd Content.
+    motd_content = []
+    motd_content.append(linux_on_litex_ascii_art)
+    motd_content.append(f"CPU Type   : {cpu_type}")
+    motd_content.append(f"Build Date : {datetime.now().strftime('%Y-%m-%d')}")
+    motd_content = "\n".join(motd_content)
+
+    # Write Motd Content to file.
+    os.makedirs(os.path.dirname(motd_path), exist_ok=True)
+    with open(motd_path, "w") as motd_file:
+        motd_file.write(motd_content)
 
 def linux_build(cpu_type):
     # Create Third-Party directory (if not present) and switch to it.
@@ -256,6 +278,7 @@ def main():
         extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"] # FIXME: Avoid/Remove.
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
+        linux_generate_motd(cpu_type)
         if linux_build(cpu_type) != 0:
             return ErrorCode.BUILD_ERROR
 
