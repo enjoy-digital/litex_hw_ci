@@ -131,6 +131,10 @@ significantly streamlines the process of loading FPGA configurations and managin
 monitoring. With a YKUSH kit, only the board under test is connected at any given time, enhancing
 the efficiency and reliability of the testing workflow.
 
+<p align="center">
+  <img src="https://www.yepkit.com/uploads/images/eb63b_YKUSH_rev.png" width="300" />
+</p>
+
 ## Compiling and Installing YKUSH Software
 
 To take full advantage of YKUSH kits for hardware testing, the ykushcmd command-line tool needs to
