@@ -53,9 +53,9 @@ header img:last-child {
                 <td>{{ results.get('Time', '-') }}</td>
                 <td>{{ results.get('Duration', '-') }}</td>
                 {% for step in steps %}
-                    {% set status = results.get(step.capitalize(), 'NOT_RUN') %}
+                    {% set status = results.get(step.capitalize(), '-') %}
                     <td class="status-{{ status }}">
-                        {% if status != 'NOT_RUN' %}
+                        {% if status != '-' %}
                             <a href="build_{{ name }}/{{ step }}.rpt" target="_blank">{{ status }}</a>
                         {% else %}
                             {{ status }}

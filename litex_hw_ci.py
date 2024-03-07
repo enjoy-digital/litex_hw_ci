@@ -176,6 +176,8 @@ class LiteXCIConfig:
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
 def enum_to_str(enum_val):
+    if isinstance(enum_val, LiteXCIStatus) and (enum_val == LiteXCIStatus.NOT_RUN):
+        return "-"
     if isinstance(enum_val, enum.Enum):
         return enum_val.name
     return str(enum_val)
@@ -192,7 +194,7 @@ def generate_html_report(report, report_filename, steps, start_time, config_file
                 results[step_key] = enum_to_str(results[step_key])
 
     # Prepare summary information.
-    tests_executed    = sum(1 for results in report.values() if any(status != 'NOT_RUN' for status in results.values()))
+    tests_executed    = sum(1 for results in report.values() if any(status != '-' for status in results.values()))
     total_seconds     = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
     hours, remainder  = divmod(total_seconds, 3600)
     minutes, seconds  = divmod(remainder, 60)
