@@ -63,6 +63,7 @@ def linux_generate_motd(cpu_type):
     motd_content.append(linux_on_litex_ascii_art)
     motd_content.append(f"CPU Type   : {cpu_type}")
     motd_content.append(f"Build Date : {datetime.now().strftime('%Y-%m-%d')}")
+    motd_content.append("")
     motd_content = "\n".join(motd_content)
 
     # Write Motd Content to file.

@@ -178,7 +178,7 @@ class LiteXCIConfig:
 def enum_to_str(enum_val):
     if isinstance(enum_val, LiteXCIStatus) and (enum_val == LiteXCIStatus.NOT_RUN):
         return "-"
-    if isinstance(enum_val, enum.Enum):
+    elif isinstance(enum_val, enum.Enum):
         return enum_val.name
     return str(enum_val)
 
