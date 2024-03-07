@@ -123,4 +123,18 @@ litex_ci_configs = {
         tty              = "/dev/ttyUSB1",
         tests            = tests,
     ),
+    # Acorn Baseboard Mini running Rocket with:
+    # - 1 Core
+    # - Ethernet - 1Gbps Ethernet / 1000BaseX with SFP module.
+    "acorn_rocket_1_core" : LiteXCIConfig(
+        target           = "litex_acorn_baseboard_mini",
+        gateware_command = f"--sys-clk-freq 50e6 \
+        --cpu-type=rocket --cpu-num-cores=1 --cpu-mem-width=2 --cpu-variant=linux \
+        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        software_command = f"cd linux && python3 make.py ../build_acorn_rocket_1_core/soc.json {linux_build_args}",
+        setup_command    = "",
+        exit_command     = "",
+        tty              = "/dev/ttyUSB1",
+        tests            = tests,
+    ),
 }
