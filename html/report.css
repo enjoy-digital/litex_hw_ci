@@ -17,6 +17,10 @@ body {
     overflow      : hidden;
 }
 
+.funding {
+    text-align: center;
+}
+
 header {
     display         : flex;
     align-items     : center;
