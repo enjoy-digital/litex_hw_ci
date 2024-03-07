@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# Start test sequence
+#
+
+INTERFACE=eth0
+
+MMC_DEV=/dev/mmcblk0p1
+USB_DEV=/dev/sda1
+MOUNT_POINT=/mnt
+
+network_test() {
+	ret=0
+	# 1. test if network interface is present and UP.
+	res=$(/sbin/ifconfig $INTERFACE | grep "UP")
+	if [[ "x${res}x" == "xx" ]]; then
+		ret=1
+	else
+		REMOTE_IP=$(route | grep '^default' | tr -s ' ' | cut -n -d " " -f 2)
+		ping -c 2 $REMOTE_IP > /dev/null 2>&1
+		ret=$?
+	fi
+
+	echo -n "Network Test: "
+	if [[ $ret == 0 ]]; then
+		echo "OK"
+	else
+		echo "KO"
+	fi
+	return $ret
+}
+
+storage_test() {
+	DEVICE=$1
+	MOUNT_POINT=$2
+	ret=0
+
+	# 1. test if mmc is present.
+	if [ ! -e $DEVICE ]; then
+		return 1
+	fi
+
+	# 2. try to mount device
+	mount $DEVICE $MOUNT_POINT > /dev/null 2>&1
+	ret=$?
+	if [[ $ret == 0 ]]; then
+		# 3. try to read and compare file content
+		ret=1
+		content=$(cat $MOUNT_POINT/litex_ci.txt)
+		if [[ "$content" == "Hello World" ]]; then
+			ret=0
+		fi
+
+		umount $MOUNT_POINT > /dev/null 2>&1
+	fi
+
+	return $ret
+}
+
+sdcard_test() {
+	storage_test $MMC_DEV $MOUNT_POINT
+	ret=$?
+	echo -n "MMC Test: "
+	if [[ $ret == 0 ]]; then
+		echo "OK"
+	else
+		echo "KO"
+	fi
+
+	return $ret
+}
+
+usbhost_test() {
+	storage_test $USB_DEV $MOUNT_POINT
+	ret=$?
+	echo -n "USB Test: "
+	if [[ $ret == 0 ]]; then
+		echo "OK"
+	else
+		echo "KO"
+	fi
+
+	return $ret
+}
+
+case "$1" in
+	start)
+		network_test
+		sdcard_test
+		usbhost_test
+		;;
+	*);;
+esac
+
