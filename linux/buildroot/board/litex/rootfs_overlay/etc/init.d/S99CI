@@ -1,94 +1,73 @@
 #!/bin/sh
 #
-# Start test sequence
+# LiteX HW CI Peripherals Test
 #
 
+# Configuration parameters.
 INTERFACE=eth0
-
 MMC_DEV=/dev/mmcblk0p1
 USB_DEV=/dev/sda1
 MOUNT_POINT=/mnt
 
+# Result Helper.
+echo_result() {
+    echo -n "$1 Test: "
+    [ $2 -eq 0 ] && echo "OK" || echo "KO"
+}
+
+# Network Test: Verify status and perform connectivity test.
 network_test() {
-	ret=0
-	# 1. test if network interface is present and UP.
-	res=$(/sbin/ifconfig $INTERFACE | grep "UP")
-	if [[ "x${res}x" == "xx" ]]; then
-		ret=1
-	else
-		REMOTE_IP=$(route | grep '^default' | tr -s ' ' | cut -n -d " " -f 2)
-		ping -c 2 $REMOTE_IP > /dev/null 2>&1
-		ret=$?
-	fi
+    ifconfig $INTERFACE | grep -q "UP"
+    if_up=$?
 
-	echo -n "Network Test: "
-	if [[ $ret == 0 ]]; then
-		echo "OK"
-	else
-		echo "KO"
-	fi
-	return $ret
+    ping -c 2 $(route | grep '^default' | awk '{print $2}') > /dev/null 2>&1
+    ping_success=$?
+
+    if [ $if_up -eq 0 ] && [ $ping_success -eq 0 ]; then
+        echo_result Network 0
+    else
+        echo_result Network 1
+    fi
 }
 
+# Storage Test: Verify file present, content of a storage device.
 storage_test() {
-	DEVICE=$1
-	MOUNT_POINT=$2
-	ret=0
-
-	# 1. test if mmc is present.
-	if [ ! -e $DEVICE ]; then
-		return 1
-	fi
-
-	# 2. try to mount device
-	mount $DEVICE $MOUNT_POINT > /dev/null 2>&1
-	ret=$?
-	if [[ $ret == 0 ]]; then
-		# 3. try to read and compare file content
-		ret=1
-		content=$(cat $MOUNT_POINT/litex_ci.txt)
-		if [[ "$content" == "Hello World" ]]; then
-			ret=0
-		fi
-
-		umount $MOUNT_POINT > /dev/null 2>&1
-	fi
-
-	return $ret
+    local DEVICE=$1
+    local MOUNT=$2
+    if [ -e $DEVICE ]; then
+        mount $DEVICE $MOUNT > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            content=$(cat $MOUNT/litex_ci.txt 2>/dev/null)
+            umount $MOUNT > /dev/null 2>&1
+            [ "$content" == "Hello World" ] && return 0
+        fi
+    fi
+    return 1
 }
 
+# SDCard Test.
 sdcard_test() {
-	storage_test $MMC_DEV $MOUNT_POINT
-	ret=$?
-	echo -n "MMC Test: "
-	if [[ $ret == 0 ]]; then
-		echo "OK"
-	else
-		echo "KO"
-	fi
-
-	return $ret
+    if storage_test $MMC_DEV $MOUNT_POINT; then
+        echo_result MMC 0
+    else
+        echo_result MMC 1
+    fi
 }
 
+# USB Test.
 usbhost_test() {
-	storage_test $USB_DEV $MOUNT_POINT
-	ret=$?
-	echo -n "USB Test: "
-	if [[ $ret == 0 ]]; then
-		echo "OK"
-	else
-		echo "KO"
-	fi
-
-	return $ret
+    if storage_test $USB_DEV $MOUNT_POINT; then
+        echo_result USB 0
+    else
+        echo_result USB 1
+    fi
 }
 
+# Run tests.
 case "$1" in
-	start)
-		network_test
-		sdcard_test
-		usbhost_test
-		;;
-	*);;
+    start)
+        network_test
+        sdcard_test
+        usbhost_test
+        ;;
 esac
-
