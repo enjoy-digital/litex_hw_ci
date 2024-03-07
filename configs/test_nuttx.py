@@ -24,8 +24,8 @@ tests = [
 litex_ci_configs = {
     # Digilent Arty running VexRiscv with:
     # - Ethernet 100Mbps.
-    "arty:vexriscv-secure-1-core" : LiteXCIConfig(
-        target           = "digilent_arty",
+    "nuttx" : LiteXCIConfig(
+        target           = target,
         gateware_command = f"--sys-clk-freq 100e6 \
         --uart-baudrate 1000000 \
         --cpu-type=vexriscv --cpu-variant=secure \
