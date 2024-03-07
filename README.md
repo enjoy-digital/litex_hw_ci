@@ -13,8 +13,8 @@
 --------
 
 <p align="center">
-  <img src="html/litex.png" width="200" />
-  <img src="html/nlnet.svg" width="200" />
+  <img src="doc/enjoy_digital.png" width="200" />
+  <img src="doc/litex.png" width="200" />
 </p>
 
 
@@ -151,7 +151,7 @@ development and enhancement of this project. We're grateful for their support in
 initiative possible.
 
 <p align="center">
-  <img src="html/nlnet.svg" width="300" />
+  <img src="doc/nlnet.svg" width="300" />
 </p>
 
 [> Enjoy :)
