@@ -10,7 +10,7 @@ from litex_hw_ci import LiteXCIConfig, LiteXCITest
 
 # LiteX CI Config Definitions ----------------------------------------------------------------------
 
-target = "digilent_arty"
+target = "litex_acorn_baseboard_mini"
 tty    = "/dev/ttyUSB1"
 
 litex_cpus = [
