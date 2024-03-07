@@ -98,9 +98,10 @@ def linux_build(cpu_type):
 
             return ret.returncode
 
-def linux_prepare_tftp(tftp_root=tftp_root, rootfs="ram0"):
+def linux_prepare_tftp(tftp_root=tftp_root, rootfs="ram0", cpu_type=""):
+    extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
     ret  = os.system(f"cp images/* {tftp_root}/")
-    ret |= os.system(f"cp images/boot_rootfs_{rootfs}.json {tftp_root}/boot.json")
+    ret |= os.system(f"cp images/boot_{extra_name}rootfs_{rootfs}.json {tftp_root}/boot.json")
     return ret
 
 def linux_copy_images(soc_json):
@@ -142,12 +143,24 @@ from litex.tools.litex_json2dts_linux import generate_dts as litex_generate_dts
 # DTS generation.
 # ---------------
 
-def generate_dts(soc_json, rootfs="ram0"):
+def generate_dts(soc_json, rootfs="ram0", cpu_type=""):
     base_dir = os.path.dirname(soc_json)
     dts = os.path.join(base_dir, "soc.dts")
     initrd = "enabled" if rootfs == "ram0" else "disabled"
+    if rootfs == "ram0" and cpu_type == "rocket":
+        initrd_start = 0x02000000
+        initrd_size  = 0x000C55DF
+    else:
+        initrd_start = None
+        initrd_size  = None
     with open(soc_json) as json_file, open(dts, "w") as dts_file:
-        dts_content = litex_generate_dts(json.load(json_file), initrd=initrd, polling=False, root_device=rootfs)
+        dts_content = litex_generate_dts(json.load(json_file),
+            initrd_start = initrd_start,
+            initrd_size  = initrd_size,
+            initrd       = initrd,
+            polling      = False,
+            root_device  = rootfs
+        )
         dts_file.write(dts_content)
 
 
@@ -265,7 +278,7 @@ def main():
     # Linux Device Tree Generation.
     # -----------------------------
     if args.generate_dtb:
-        generate_dts(args.soc_json, rootfs=args.rootfs)
+        generate_dts(args.soc_json, rootfs=args.rootfs, cpu_type=cpu_type)
         if compile_dts(args.soc_json) != 0:
             return ErrorCode.DTS_ERROR
         if combine_dtb(args.soc_json) != 0:
@@ -286,7 +299,7 @@ def main():
     # TFTP-Prepare.
     # -------------
     if args.prepare_tftp:
-        if linux_prepare_tftp(rootfs=args.rootfs) != 0:
+        if linux_prepare_tftp(rootfs=args.rootfs, cpu_type=cpu_type) != 0:
             return ErrorCode.TFTP_ERROR
 
     # Images Copy.
