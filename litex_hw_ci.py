@@ -248,7 +248,7 @@ def main():
             return
         litex_ci_configs = {args.config: litex_ci_configs[args.config]}
 
-    steps  = ["setup", "firmware_build", "gateware_build", "software_build", "load", "test", "exit"]
+    steps  = ["firmware_build", "gateware_build", "software_build", "setup", "load", "test", "exit"]
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
     # Generate empty HTML report.
