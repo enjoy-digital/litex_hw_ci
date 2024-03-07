@@ -11,6 +11,7 @@
 * naxriscv 32 : ok
 * naxriscv 64 : partial (ok with **ABI=lp64** and without **fdc** extensions =>
   kernel panic otherwise)
+* rocket: partial (build: ok, but stop booting with `Waiting for root device /dev/ram0...`
 
 Currently only tested with digilent arty target.
 
