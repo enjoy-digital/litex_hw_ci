@@ -192,12 +192,15 @@ def generate_html_report(report, report_filename, steps, start_time, config_file
             if step_key in results:
                 results[step_key] = enum_to_str(results[step_key])
 
-    summary = {
-        'start_time'     : start_time,
-        'config_file'    : config_file,
-        'tests_executed' : sum(1 for results in report.values() if any(status != '-' for status in results.values())),
-        'total_duration' : calculate_total_duration(report),
-    }
+    # Summary generation.
+    tests_executed = sum(1 for results in report.values() if any(status != '-' for status in results.values()))
+    total_duration = calculate_total_duration(report)
+    summary = f"""
+    <strong>Config File:</strong> {config_file}<br>
+    <strong>Tests Executed:</strong> {tests_executed}<br>
+    <strong>Start Time:</strong> {start_time}<br>
+    <strong>Total Duration:</strong> {total_duration}
+    """
 
     # Load and render template.
     env = Environment(loader=FileSystemLoader(searchpath='./'))
@@ -213,70 +216,92 @@ def generate_html_report(report, report_filename, steps, start_time, config_file
 def format_name(name):
     return re.sub(r'[^\w-]', '_', name)
 
+def load_configurations(config_file):
+    """Loads LiteX CI configurations, handling import errors."""
+    config_module_path = config_file.replace(".py", "").replace("/", ".")
+    try:
+        config_module = __import__(config_module_path, fromlist=[''])
+        return config_module.litex_ci_configs
+    except ImportError as e:
+        print(f"Error: {e}\nConfigurations file '{config_file}' not found or doesn't define 'litex_ci_configs'.")
+        return None
+
+def list_configurations(configurations):
+    """Prints available configuration names."""
+    print("Available configurations:")
+    for name in configurations:
+        print(f"- {name}")
+
+def run_tests(configurations, selected_config=None):
+    """Executes CI tests for given or all configurations."""
+    steps = ["firmware_build", "gateware_build", "software_build", "setup", "load", "test", "exit"]
+    report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in configurations}
+
+    for name, config in configurations.items():
+        if selected_config and name != selected_config:
+            continue
+
+        run_configuration_tests(name, config, report, steps)
+
+    return report
+
+def run_configuration_tests(name, config, report, steps, report_filename, test_start_time, config_file):
+    """Runs test steps for a configuration, updates, and regenerates the report after each step."""
+    name = format_name(name)
+    config.set_name(name)
+    start_time = time.time()
+
+    for step in steps:
+        status = getattr(config, step)()
+        report[name][step.capitalize()] = enum_to_str(status)
+        update_report_timing(report, name, start_time)
+        generate_html_report(report, report_filename, steps, test_start_time, config_file)
+        if status not in [LiteXCIStatus.SUCCESS, LiteXCIStatus.NOT_RUN]:
+            break
+
+def update_report_timing(report, name, start_time):
+    """Updates report with execution time for a test."""
+    end_time = time.time()
+    duration = end_time - start_time
+    report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
+    report[name]['Duration'] = f"{duration:.2f} seconds"
+
 def main():
-    parser = argparse.ArgumentParser(description="LiteX HW CI")
-    parser.add_argument("config_file",                     help="Path to the configurations file.")
-    parser.add_argument("--report",                        help="Filename for the HTML report, defaults to basename of the config file with .html extension.")
-    parser.add_argument("--config",                        help="Select specific configuration from file (optional).")
-    parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
+    parser = argparse.ArgumentParser(description="LiteX HW CI.")
+    parser.add_argument("config_file",                 help="Path to the configurations file.")
+    parser.add_argument("--report",                    help="Filename for the HTML report, defaults to basename of the config file with .html extension.")
+    parser.add_argument("--config",                    help="Select specific configuration from file (optional).")
+    parser.add_argument("--list", action="store_true", help="List all available configurations in file and exit.")
     args = parser.parse_args()
 
-    if not args.report:
-        base_name = os.path.basename(args.config_file)
-        args.report = f"{os.path.splitext(base_name)[0]}.html"
-
-    # Capture the start time.
+    # Ensure report filename is set
+    args.report = args.report or f"{Path(args.config_file).stem}.html"
     test_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Import litex_ci_configs from the specified config file.
-    try:
-        config_module = __import__(args.config_file.replace(".py", "").replace("/", "."), fromlist=[''])
-        litex_ci_configs = config_module.litex_ci_configs
-    except ImportError as e:
-        print(f"Error: {e}\nConfigurations file '{args.config_file}' not found or doesn't define 'litex_ci_configs'.")
+    litex_ci_configs = load_configurations(args.config_file)
+    if litex_ci_configs is None:
         return
 
-    # If --list is specified, print the configurations and exit.
     if args.list:
-        print("Available configurations:")
-        for name in litex_ci_configs:
-            print(f"- {name}")
+        list_configurations(litex_ci_configs)
         return
 
-    # If --config is specified, only execute this configuration.
-    if args.config:
-        if args.config not in litex_ci_configs:
-            print(f"Error: Configuration '{args.config}' not found.")
-            return
-        litex_ci_configs = {args.config: litex_ci_configs[args.config]}
+    selected_config = args.config
+    if selected_config and selected_config not in litex_ci_configs:
+        print(f"Error: Configuration '{selected_config}' not found.")
+        return
 
-    steps  = ["firmware_build", "gateware_build", "software_build", "setup", "load", "test", "exit"]
+    steps = ["firmware_build", "gateware_build", "software_build", "setup", "load", "test", "exit"]
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
-    # Generate empty HTML report.
-    os.system("cp html/report.css ./")
     generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
-    # Iterate on configurations and progressively update report.
     for name, config in litex_ci_configs.items():
-        name = format_name(name)
-        config.set_name(name)
-        start_time = time.time()
-        for step in steps:
-            status = getattr(config, step)()
-            report[name][step.capitalize()] = enum_to_str(status)
-            if status not in [LiteXCIStatus.SUCCESS, LiteXCIStatus.NOT_RUN]:
-                break
-
-            end_time = time.time()
-            duration = end_time - start_time
-            report[name]['Time']     = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_time))
-            report[name]['Duration'] = f"{duration:.2f} seconds"
-
-            generate_html_report(report, args.report, steps, test_start_time, args.config_file)
+        if selected_config and name != selected_config:
+            continue
+        run_configuration_tests(name, config, report, steps, args.report, test_start_time, args.config_file)
 
     generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
 if __name__ == "__main__":
     main()
-
