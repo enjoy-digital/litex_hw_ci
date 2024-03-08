@@ -147,9 +147,11 @@ def generate_dts(soc_json, rootfs="ram0", cpu_type=""):
     base_dir = os.path.dirname(soc_json)
     dts = os.path.join(base_dir, "soc.dts")
     initrd = "enabled" if rootfs == "ram0" else "disabled"
+    if cpu_type.startswith("naxriscv"):
+        cpu_type = "naxriscv"
     if rootfs == "ram0" and cpu_type == "rocket":
         initrd_start = 0x02000000
-        initrd_size  = 0x000C55DF
+        initrd_size  = 0x01000000
     else:
         initrd_start = None
         initrd_size  = None
