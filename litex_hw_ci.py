@@ -176,7 +176,7 @@ class LiteXCIConfig:
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
 def enum_to_str(enum_val):
-    if isinstance(enum_val, LiteXCIStatus) and (enum_val == LiteXCIStatus.NOT_RUN):
+    if enum_val == LiteXCIStatus.NOT_RUN:
         return "-"
     elif isinstance(enum_val, enum.Enum):
         return enum_val.name
@@ -264,7 +264,7 @@ def main():
         start_time = time.time()
         for step in steps:
             status = getattr(config, step)()
-            report[name][step.capitalize()] = status
+            report[name][step.capitalize()] = enum_to_str(status)
             if status not in [LiteXCIStatus.SUCCESS, LiteXCIStatus.NOT_RUN]:
                 break
 
