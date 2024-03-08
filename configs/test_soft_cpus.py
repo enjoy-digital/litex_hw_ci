@@ -41,6 +41,7 @@ litex_cpus = [
 
 litex_ci_configs = {}
 for litex_cpu in litex_cpus:
+    litex_cpu = litex_cpu.replace(" ", "")
     litex_ci_config = LiteXCIConfig(
         target           = target,
         gateware_command = f"--cpu-type={litex_cpu} --integrated-main-ram-size=0x100",
