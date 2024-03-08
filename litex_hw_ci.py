@@ -46,6 +46,7 @@ class LiteXCITest:
 # LiteX CI Helpers ---------------------------------------------------------------------------------
 
 def execute_command(command, log_path, shell=False):
+    log_path = Path(log_path)
     with open(log_path, "w") as log_file:
         if not shell:
             command = shlex.split(command)
@@ -59,11 +60,6 @@ def execute_command(command, log_path, shell=False):
             print(line, end='')
             log_file.write(line)
     return process.wait() == 0
-
-def prepare_directory(name):
-    dst_dir = Path(f"build_{name}")
-    dst_dir.mkdir(parents=True, exist_ok=True)
-    return dst_dir
 
 # LiteX CI Config ----------------------------------------------------------------------------------
 
@@ -95,11 +91,11 @@ class LiteXCIConfig:
     def set_name(self, name=""):
         assert not hasattr(self, "name")
         self.name       = name
-        self.output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"build_{name}")
+        self.output_dir = Path(__file__).parent / f"build_{name}"
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def perform_step(self, step_name, command, log_filename_suffix, shell=False):
-        dst_dir  = prepare_directory(self.name)
-        log_path = os.path.join(dst_dir, f"{log_filename_suffix}.rpt")
+        log_path = self.output_dir / f"{log_filename_suffix}.rpt"
         if execute_command(command, log_path, shell):
             return LiteXCIStatus.SUCCESS
         return getattr(LiteXCIStatus, f"{step_name.upper()}_ERROR")
@@ -114,7 +110,7 @@ class LiteXCIConfig:
     def gateware_build(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
         --output-dir={self.output_dir} \
-        --build --no-compile-gateware"
+        --build"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
@@ -136,8 +132,7 @@ class LiteXCIConfig:
         return self.perform_step("load", command, "load")
 
     def test(self):
-        dst_dir  = prepare_directory(self.name)
-        log_path = os.path.join(dst_dir, "test.rpt")
+        log_path = self.output_dir / f"test.rpt"
         status = LiteXCIStatus.TEST_ERROR
 
         # Open TTY and log file.
@@ -217,7 +212,7 @@ def format_name(name):
 def main():
     parser = argparse.ArgumentParser(description="LiteX HW CI")
     parser.add_argument("config_file",                     help="Path to the configurations file.")
-    parser.add_argument("--report",                        help="Filename for the HTML report. If not specified, it defaults to the basename of the config file with .html extension.")
+    parser.add_argument("--report",                        help="Filename for the HTML report, defaults to basename of the config file with .html extension.")
     parser.add_argument("--config",                        help="Select specific configuration from file (optional).")
     parser.add_argument("--list", action="store_true",     help="List all available configurations in file and exit.")
     args = parser.parse_args()
