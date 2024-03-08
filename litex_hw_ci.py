@@ -178,29 +178,33 @@ def enum_to_str(enum_val):
         return enum_val.name
     return str(enum_val)
 
-def generate_html_report(report, report_filename, steps, start_time, config_file):
-    env      = Environment(loader=FileSystemLoader(searchpath='./'))
-    template = env.get_template('html/report_template.html')
+def calculate_total_duration(report):
+    total_seconds    = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds"
 
-    # Convert Enum values to strings.
+def generate_html_report(report, report_filename, steps, start_time, config_file):
+    # Prepare data for template.
     for name, results in report.items():
         for step in steps:
             step_key = step.capitalize()
             if step_key in results:
                 results[step_key] = enum_to_str(results[step_key])
 
-    # Prepare summary information.
-    tests_executed    = sum(1 for results in report.values() if any(status != '-' for status in results.values()))
-    total_seconds     = sum(float(results.get('Duration', '0.00 seconds')[:-7]) for results in report.values())
-    hours, remainder  = divmod(total_seconds, 3600)
-    minutes, seconds  = divmod(remainder, 60)
-    summary  = f"<p>Build Start Time: {start_time} | Configs File: {config_file}</p>"
-    summary += f"<p>Number of tests executed: {tests_executed} | Total Duration: {int(hours)} hours, {int(minutes)} minutes, {int(seconds)} seconds</p>"
+    summary = {
+        'start_time'     : start_time,
+        'config_file'    : config_file,
+        'tests_executed' : sum(1 for results in report.values() if any(status != '-' for status in results.values())),
+        'total_duration' : calculate_total_duration(report),
+    }
 
-    # Render the HTML template with the report data and summary.
+    # Load and render template.
+    env = Environment(loader=FileSystemLoader(searchpath='./'))
+    template = env.get_template('html/report_template.html')
     html_content = template.render(report=report, steps=steps, summary=summary)
 
-    # Write the rendered HTML to the report file.
+    # Write to file.
     with open(report_filename, 'w') as file:
         file.write(html_content)
 
