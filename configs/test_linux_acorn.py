@@ -45,7 +45,7 @@ litex_ci_configs = {
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_vexriscv_32_bit_4_cores_wishbone/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -63,7 +63,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_naxriscv_32_bit_wishbone/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -81,7 +81,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_naxriscv_32_bit_axi_lite/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -99,7 +99,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_naxriscv_64_bit_wishbone/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -117,7 +117,7 @@ litex_ci_configs = {
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_naxriscv_64_bit_axi_lite/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
@@ -131,7 +131,7 @@ litex_ci_configs = {
         gateware_command = f"--sys-clk-freq 75e6 \
         --cpu-type=rocket --cpu-num-cores=1 --cpu-mem-width=2 --cpu-variant=linux \
         --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
-        software_command = f"cd linux && python3 make.py ../build_acorn_rocket_1_core/soc.json {linux_build_args}",
+        software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
         tty              = "/dev/ttyUSB1",
