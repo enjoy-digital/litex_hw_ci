@@ -294,6 +294,7 @@ def main():
     steps = ["firmware_build", "gateware_build", "software_build", "setup", "load", "test", "exit"]
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
 
+    os.system("cp html/report.css ./")
     generate_html_report(report, args.report, steps, test_start_time, args.config_file)
 
     for name, config in litex_ci_configs.items():
