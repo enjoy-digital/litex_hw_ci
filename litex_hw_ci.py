@@ -94,7 +94,8 @@ class LiteXCIConfig:
 
     def set_name(self, name=""):
         assert not hasattr(self, "name")
-        self.name = name
+        self.name       = name
+        self.output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), f"build_{name}")
 
     def perform_step(self, step_name, command, log_filename_suffix, shell=False):
         dst_dir  = prepare_directory(self.name)
@@ -105,21 +106,21 @@ class LiteXCIConfig:
 
     def firmware_build(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
-        --output-dir=build_{self.name} \
-        --soc-json=build_{self.name}/soc.json \
+        --output-dir={self.output_dir} \
+        --soc-json={self.output_dir}/soc.json \
         --build --no-compile-gateware"
         return self.perform_step("build", command, "firmware_build")
 
     def gateware_build(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
-        --output-dir=build_{self.name} \
-        --build"
+        --output-dir={self.output_dir} \
+        --build --no-compile-gateware"
         return self.perform_step("build", command, "gateware_build")
 
     def software_build(self):
         if self.software_command == "":
             return LiteXCIStatus.NOT_RUN
-        r = self.perform_step("build", self.software_command, "software_build", shell=True)
+        r = self.perform_step("build", self.software_command.format(output_dir=self.output_dir), "software_build", shell=True)
         return r
 
     def setup(self):
@@ -130,7 +131,7 @@ class LiteXCIConfig:
 
     def load(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
-        --output-dir=build_{self.name} \
+        --output-dir={self.output_dir} \
         --load"
         return self.perform_step("load", command, "load")
 
