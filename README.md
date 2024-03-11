@@ -28,8 +28,6 @@ OSes), and then load and test them on hardware.
 Initially developed for LiteX Hardware CI tests, this framework is designed to be generic enough for
 reuse in other Hardware/FPGA projects. Its focus is on simplicity and ease of use.
 
-<p align="center"><img src="doc/litex_acorn_baseboard.png"/></p>
-
 [> Testing process.
 -------------------
 
@@ -170,3 +168,5 @@ Your LiteX HW CI setup with YKUSH kits should be ready, making FPGA testing effi
 straightforward. Dive into your projects and consider sharing your progress with the community.
 
 Happy testing!
+
+<p align="center"><img src="doc/litex_acorn_baseboard.png"/></p>
