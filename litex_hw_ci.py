@@ -70,6 +70,7 @@ class LiteXCIConfig:
         setup_command    = "",
         exit_command     = "",
         tty              = "", tty_baudrate=115200,
+        test_delay       = 0,
         tests            = [LiteXCITest(send="reboot", keyword="Memtest OK", timeout=5.0)],
     ):
         # Target Parameters.
@@ -86,6 +87,7 @@ class LiteXCIConfig:
         self.tty_baudrate     = tty_baudrate
 
         # Tests.
+        self.test_delay       = test_delay
         self.tests            = tests
 
     def set_name(self, name=""):
@@ -132,6 +134,7 @@ class LiteXCIConfig:
         return self.perform_step("load", command, "load")
 
     def test(self):
+        time.sleep(self.test_delay)
         log_path = self.output_dir / f"test.rpt"
         status = LiteXCIStatus.TEST_ERROR
 
