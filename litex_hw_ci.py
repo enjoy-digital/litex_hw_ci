@@ -124,8 +124,8 @@ class LiteXCIConfig:
     def setup(self):
         if self.setup_command == "":
             return LiteXCIStatus.NOT_RUN
-        os.system(self.setup_command) # FIXME.
-        return LiteXCIStatus.SUCCESS
+        r = self.perform_step("setup", self.setup_command, "setup", shell=True)
+        return r
 
     def load(self):
         command = f"python3 -m litex_boards.targets.{self.target} {self.gateware_command} \
@@ -169,8 +169,8 @@ class LiteXCIConfig:
     def exit(self):
         if self.exit_command == "":
             return LiteXCIStatus.NOT_RUN
-        os.system(self.exit_command) # FIXME.
-        return LiteXCIStatus.SUCCESS
+        r = self.perform_step("exit", self.exit_command, "exit", shell=True)
+        return r
 
 # LiteX CI HTML report -----------------------------------------------------------------------------
 
