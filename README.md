@@ -26,6 +26,9 @@ reuse in other Hardware/FPGA projects. Its focus is on simplicity and ease of us
   <img src="doc/litex.png" width="200" />
 </p>
 
+**Disclaimer: Work in Progress**
+Please note that this project is currently a work in progress and is subject to change as we continue to
+experiment with more setups and boards.
 
 [> Testing process.
 -------------------
