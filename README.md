@@ -19,6 +19,8 @@
 [> Intro
 --------
 
+<p align="center"><img src="doc/litex_hw_ci_setup.jpg"/></p>
+
 This project provides an environment to complement software CI tests on hardware boards. It offers
 scripts and tools to easily define configurations for testing, compile them, compile software (baremetal,
 OSes), and then load and test them on hardware.
