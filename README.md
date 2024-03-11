@@ -103,8 +103,8 @@ details.
 from litex_hw_ci import LiteXCIConfig
 
 litex_ci_configs = {
-    "trellisboard:serv" : LiteXCIConfig(
-        target           = "trellisboard",
+    "litex_acorn_baseboard_mini" : LiteXCIConfig(
+        target           = "litex_acorn_baseboard_mini",
         gateware_command = "--cpu-type=serv --integrated-main-ram-size=0x100",
         setup_command    = "ykushcmd -d a && ykushcmd -u 1",
         exit_command     = "ykushcmd -d a",
