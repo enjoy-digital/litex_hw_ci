@@ -9,17 +9,10 @@
 
 ![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)
 
-
-<p align="center">
-  <img src="doc/enjoy_digital.png" width="200" />
-  <img src="doc/litex.png" width="200" />
-</p>
-
+<p align="center"><img src="doc/litex_hw_ci_setup.jpg"/></p>
 
 [> Intro
 --------
-
-<p align="center"><img src="doc/litex_hw_ci_setup.jpg"/></p>
 
 This project provides an environment to complement software CI tests on hardware boards. It offers
 scripts and tools to easily define configurations for testing, compile them, compile software (baremetal,
@@ -27,6 +20,12 @@ OSes), and then load and test them on hardware.
 
 Initially developed for LiteX Hardware CI tests, this framework is designed to be generic enough for
 reuse in other Hardware/FPGA projects. Its focus is on simplicity and ease of use.
+
+<p align="center">
+  <img src="doc/enjoy_digital.png" width="200" />
+  <img src="doc/litex.png" width="200" />
+</p>
+
 
 [> Testing process.
 -------------------
