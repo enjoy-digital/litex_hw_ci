@@ -61,7 +61,7 @@ Here's a step-by-step breakdown of how it works:
 To run a test with the LiteX HW CI framework, you'll start by executing the litex_hw_ci.py script,
 specifying the configuration file that outlines your test setup. For example:
 ```sh
-python litex_hw_ci.py --config your_configuration_file.py
+python litex_hw_ci.py your_config_file.py [--config specific_config]
 ```
 
 will kick off the process. This script follows the instructions laid out in the configuration file,
