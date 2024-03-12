@@ -1,52 +1,54 @@
-[> Status
----------
+# LiteX NuttX Build Status and Testing Procedures
 
-* nuttx / nuttx-apps version: master
-* nuttx defconfig: **netnsh**
+[> Overview
+-----------
 
-### CPUs
+This document outlines the current status of LiteX NuttX builds and provides a guide to testing hardware compatibility.
 
-* vexriscv 32 secure: ok
-* vexriscv 32 smp: TDB
+### Software Versions
 
-Currently only tested with digilent arty 35t/100t target.
+- **NuttX / NuttX-Apps Version**: Master branch.
+- **NuttX Defconfig**: **netnsh**.
+
+### CPU Compatibility
+
+- **vexriscv 32 secure**: Pass.
+
+Testing has been performed on the Digilent on the Digilent Arty A7-35T and A7-100T platforms.
 
 [> Prerequisites
------------------
+----------------
 
-`apt install kconfig-frontends`
+Installation of necessary tools:
 
-Ref: https://nuttx.apache.org/docs/latest/quickstart/install.html
+```
+apt install kconfig-frontends
+```
 
-[> Details
-----------
+For further details, refer to the [NuttX Quick Start Guide](https://nuttx.apache.org/docs/latest/quickstart/install.html).
 
-Only *liteuart* and *liteeth* are tested (litesd seems not working / bad
-configuration).
 
-## UART test
+[> Testing Procedures
+---------------------
 
-UART must be configured with a 1000000 baudrate (115200 works but seems to lost
-chars).
+Currently, testing focuses on *liteuart* and *liteeth* modules. The *litesd* module appears to be non-functional due to incorrect configuration.
 
-This test check if sequence `NuttShell (NSH)` is displayed
+### UART Testing Procedure
 
-## Ethernet test
+The UART interface should be set to a baud rate of 1000000 (1M). While 115200 baud may work, it can result in character loss.
 
-Two sequences are sent:
-* `ifconfig LOCAL_IP` to configure *eth0* interface with ip provided by the
-  *config_nuttx.py*. No read is done
-* `ping REMOTE_IP` to verify if nuttx is able to ping host computer. The sequence
-  `10 packets transmitted, 10 received, 0% packet loss` must be find in nuttx
-  answer
+**Success Criteria**: The presence of the `NuttShell (NSH)` sequence indicates a successful test.
 
-[> Notes and limitations
+### Ethernet Testing Procedure
+
+Perform the following sequences:
+- **Configuration**: Use `ifconfig LOCAL_IP` to set up the *eth0* interface with an IP address provided by *config_nuttx.py*. This step doesn't involve reading back the configuration.
+- **Connectivity Test**: Execute `ping REMOTE_IP` to test if NuttX can ping the host computer. A successful test requires finding the phrase `10 packets transmitted, 10 received, 0% packet loss` in NuttX's response.
+
+[> Notes and Limitations
 ------------------------
 
-* *memorymap* is hardcoded in *arch/risc-v/src/litex/hardware/litex_memorymap.h* but it
-  seems possible to provides another file by using
-  `CONFIG_LITEX_CUSTOM_MEMORY_MAP_PATH`. It's also true for IRQ with
-  `LITEX_CUSTOM_IRQ_DEFINITIONS_PATH`
-* *sys_clk_freq* is fixed in `defconfig` at 100MHz but may be modified using
-  `make menuconfig`
-* A solution to generate custom *irq*, *memorymap* and *defconfig* ?
+- The *memorymap* configuration is hardcoded in `arch/risc-v/src/litex/hardware/litex_memorymap.h`. Customization is possible by specifying `CONFIG_LITEX_CUSTOM_MEMORY_MAP_PATH`.
+- Similarly, IRQ configuration can be customized through `LITEX_CUSTOM_IRQ_DEFINITIONS_PATH`.
+- The `sys_clk_freq` parameter is set to 100MHz in the default configuration but can be adjusted via `make menuconfig`.
+- Is there a method to generate custom IRQ, memory map, and defconfig files efficiently?
