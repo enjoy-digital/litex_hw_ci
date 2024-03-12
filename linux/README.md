@@ -1,84 +1,56 @@
-[> Status
-----------
+# LiteX HW CI Linux Build Status and Testing Guide
 
-* buildroot version: master (must moved to a release)
-* Linux: 6.4.9 (fails to boot early versions).
-* openSBI: 1.3.1 (litex-hub/opensbi branch 1.3.1-linux-on-litex-vexriscv)
+[> Overview
+-----------
 
-### CPUs
+This document outlines the current status of LiteX Linux builds and provides a guide to testing hardware compatibility.
 
-* vexriscv_smp: ok (`litex_vexriscv_defconfig` and `litex_vexriscv_usbhost_defconfig` with `--with-usb`)
-* naxriscv 32 : ok
-* naxriscv 64 : partial (ok with **ABI=lp64** and without **fdc** extensions =>
-  kernel panic otherwise)
-* rocket: partial (build: ok, but stop booting with `Waiting for root device /dev/ram0...`
+### Software Versions
 
-Currently only tested with digilent arty target.
+- **Buildroot**: Currently using the master branch. Transition to a specific stable release is recommended.
+- **Linux Kernel**: Version 6.4.9. (Earlier versions fail to boot which will be investigated).
+- **OpenSBI**: Version 1.3.1. This version is specific to LiteX and can be found in the litex-hub/opensbi repository, branch 1.3.1-linux-on-litex-vexriscv.
 
-[> Details
-----------
+### CPU Compatibility
 
-A boot script is executed as the latest init script. It check:
+- **vexriscv_smp**: Fully supported.
+- **naxriscv 32-bit**: Fully compatible.
+- **naxriscv 64-bit**: Compatibility is partial. Stable operation requires **ABI=lp64** and excludes **fdc** extensions, as their inclusion leads to kernel panic.
+- **Rocket CPU**: Builds successfully but encounters a boot hang with the error: `Waiting for root device /dev/ram0...`.
 
-* network configuration/access
-* scard support (currently only spi-sdcard support): a /dev node is
- present/not present, a partition is mountable or not, and if it's
- possible to read file's content
-* USB host support: similar to sdcard support: a mass storage must be plugged to the USB port, with a fat partition and a file.
+Testing has been performed on the Digilent Arty platform and the LiteX Acorn Baseboard mini.
 
-USB support is a enabled by default option: `--with-usb` must be added to `make.py`
+[> Testing Procedures
+---------------------
+The final initialization script of the boot process includes a series of tests to verify:
 
-## Network test
+- **Network Configuration/Access**: Confirms the system's ability to connect to a network.
+- **SD Card Support**: Tests for SPI SD card support, checking for the presence of a `/dev` node, mountability of a partition, and readability of file contents.
+- **USB Host Support**: Similar to SD card testing but focuses but with a USB Key.
 
-The target must be connected by an RJ45 cable to a PC. If PC's IP address is
-diferent than *192.168.1.100*, argument `--remote-ip` must be used at build
-time.
+### Network Connectivity Test
 
-Sequence:
-* `ìfconfig` is used to check if the interface is ready;
-* *gateway* IP is obtained from `route`command;
-* `ping` return code is evaluated to validate/unvalidate ability to access others machine.
+1. Connect the target device to a PC using an RJ45 cable. If the PC's IP address is not *192.168.1.100*, specify a different address using the `--remote-ip` argument during build.
+2. Validate the network interface's readiness with `ifconfig`.
+3. Use the `route` command to identify the gateway IP address.
+4. Perform a `ping` test to confirm connectivity to other machines.
 
-If all steps are successfully executed the message:
-```
-Network Test: OK
-```
-is displayed or
-```
-Network Test: KO
-```
-otherwise.
+**Results**:
+- `Network Test: OK` indicates successful connectivity.
+- `Network Test: KO` signals a failure.
 
-## SDCARD test
+### SD Card Functionality Test
 
-A digilent pmod sd is plugged to *PMOD D*, a card must be inserted, with a file
-called **litex_ci.txt** containing the text **Hello World** located in the first
-partition (fat format).
+Insert an SD card containing a file named **litex_ci.txt** with the content **Hello World** into a Digilent PMOD SD connected to *PMOD D*.
 
-If the script is able to find **/dev/mmcblk0p1**, to mount partition and to read the file's content the message:
+**Results**:
+- `MMC Test: OK` indicates that detecting **/dev/mmcblk0p1**, mounting the partition, and reading the file's content yields has been successful .
+- `MMC Test: KO` signals a failure.
 
-```
-MMC Test: OK
-```
-will be displayed or
-```
-MMC Test: KO
-```
-if one of the steps fails
+### USB Device Functionality Test
 
-## USB test
+Attach a Machdyne PMOD dual USB to *PMOD A* and connect a USB storage device with a FAT partition containing **litex_ci.txt** with **Hello World**.
 
-A *Machdyne PMOD dual USB* must be connected to *PMOD A*, an USB key  (or any mass storage device) must be
-plugged to the top connector, with a file called **litex_ci.txt** containing the
-text **Hello World** located in the first fat partition.
-
-If the script is able to find **/dev/sda1**, to mount partition and to read the file's content the message:
-
-```
-USB Test: OK
-```
-will be displayed or
-```
-USB Test: KO
-```
-if one of the steps fails.
+**Results**:
+- `USB Test: OK` indicates that detecting **/dev/sda1**, mounting the partition, and reading the file's content yields has been successful .
+- `USB Test: KO` signals a failure.
