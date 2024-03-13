@@ -100,7 +100,7 @@ details.
     for managing board power and connectivity via `ykushcmd`.
 - **`tty`**: The serial port for communication with the FPGA board.
 
-### Example Configuration: TrellisBoard with SERV CPU
+### Example Configuration: LiteX Acorn Baseboard Mini with SERV CPU
 
 ```python
 from litex_hw_ci import LiteXCIConfig
@@ -115,9 +115,9 @@ litex_ci_configs = {
     ),
 }
 ```
-This configuration sets up a test for the TrellisBoard with a SERV CPU. It specifies:
+This configuration sets up a test for the LiteX Acorn Baseboard Mini with a SERV CPU. It specifies:
 
-- `trellisboard:serv`: A unique identifier for this test setup.
+- `litex_acorn_baseboard_mini`: A unique identifier for this test setup.
 - `gateware_command`: Commands for building the gateware with a SERV CPU and a main RAM size of 256
   bytes (0x100).
 - `setup_command` and `exit_command`: Prepare the board for testing and reset the environment
