@@ -151,7 +151,7 @@ def generate_dts(soc_json, rootfs="ram0", cpu_type=""):
         cpu_type = "naxriscv"
     if rootfs == "ram0" and cpu_type == "rocket":
         initrd_start = 0x02000000
-        initrd_size  = 0x01000000
+        initrd_size  = 0x00400000
     else:
         initrd_start = None
         initrd_size  = None
