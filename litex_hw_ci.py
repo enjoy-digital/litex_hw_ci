@@ -256,10 +256,11 @@ def update_report_timing(report, name, start_time):
 
 def main():
     parser = argparse.ArgumentParser(description="LiteX HW CI.")
-    parser.add_argument("config_file",                 help="Path to the configs file.")
-    parser.add_argument("--report",                    help="Filename for the HTML report, defaults to basename of the config file with .html extension.")
-    parser.add_argument("--config",                    help="Select specific config from file (optional).")
-    parser.add_argument("--list", action="store_true", help="List all available configs in file and exit.")
+    parser.add_argument("config_file",                       help="Path to the configs file.")
+    parser.add_argument("--report",                          help="Filename for the HTML report, defaults to basename of the config file with .html extension.")
+    parser.add_argument("--config",                          help="Select specific config from file (optional).")
+    parser.add_argument("--list",       action="store_true", help="List all available configs in file and exit.")
+    parser.add_argument("--test-only",  action="store_true", help="Run tests without compiling firmware, gateware, or software. Assumes necessary binaries are already available.")
     args = parser.parse_args()
 
     # Set HTML Report File.
@@ -294,6 +295,10 @@ def main():
         "test",
         "exit",
     ]
+    # When --test-only, skip compilation steps.
+    if args.test_only:
+        compile_steps = ["firmware_build", "gateware_build", "software_build"]
+        steps = [step for step in steps if step not in compile_steps]
 
     # Initialize Report.
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
