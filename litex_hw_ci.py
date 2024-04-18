@@ -71,6 +71,7 @@ class LiteXCIConfig:
         exit_command     = "",
         tty              = "", tty_baudrate=115200,
         test_delay       = 0,
+        test_boot_json   = None,
         tests            = [LiteXCITest(send="reboot", keyword="Memtest OK", timeout=5.0)],
     ):
         # Target Parameters.
@@ -88,6 +89,7 @@ class LiteXCIConfig:
 
         # Tests.
         self.test_delay       = test_delay
+        self.test_boot_json   = test_boot_json
         self.tests            = tests
 
     def set_name(self, name=""):
@@ -140,6 +142,9 @@ class LiteXCIConfig:
 
         # Prepare LiteX Term command.
         litex_term_command = f"litex_term {self.tty} --speed {self.tty_baudrate}"
+        if self.test_boot_json:
+            litex_term_command += f" --images={self.test_boot_json}"
+            print(litex_term_command)
 
         # Open log file.
         with open(log_path, "w") as log_file:
@@ -167,7 +172,7 @@ class LiteXCIConfig:
                     if test.keyword is not None:
                         _data = ""
                         while time.time() - start_time < test.timeout:
-                            data = os.read(main_fd, 1).decode('utf-8', errors='replace')
+                            data = os.read(main_fd, 128).decode('utf-8', errors='replace')
                             if data:
                                 print(data, end='', flush=True)
                                 log_file.write(data)
