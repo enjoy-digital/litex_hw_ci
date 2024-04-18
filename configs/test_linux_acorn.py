@@ -44,7 +44,7 @@ litex_ci_configs = {
         --dcache-width=64 --dcache-size=8192 --dcache-ways=2 \
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
         --dtlb-size=6 --with-coherent-dma --bus-bursting \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
@@ -62,7 +62,7 @@ litex_ci_configs = {
         gateware_command = f"--sys-clk-freq 100e6 --bus-standard=wishbone \
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
@@ -80,7 +80,7 @@ litex_ci_configs = {
         gateware_command = f"--sys-clk-freq 100e6 --bus-standard=axi-lite \
         --cpu-type=naxriscv --xlen 32 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
@@ -98,7 +98,7 @@ litex_ci_configs = {
         gateware_command = f"--sys-clk-freq 100e6 --bus-standard=wishbone \
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
@@ -116,7 +116,7 @@ litex_ci_configs = {
         gateware_command = f"--sys-clk-freq 100e6 --bus-standard=axi-lite \
         --cpu-type=naxriscv --xlen 64 --scala-args='rvc=true,rvf=true,rvd=true' --with-rvc --with-fpu \
         --with-coherent-dma \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
@@ -130,7 +130,7 @@ litex_ci_configs = {
         target           = "litex_acorn_baseboard_mini",
         gateware_command = f"--sys-clk-freq 75e6 \
         --cpu-type=rocket --cpu-num-cores=1 --cpu-mem-width=2 --cpu-variant=linux \
-        --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
+        --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
         exit_command     = "",
