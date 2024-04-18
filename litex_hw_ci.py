@@ -8,10 +8,10 @@
 
 import os
 import re
+import pty
 import time
 import enum
 import shlex
-import serial
 import socket
 import datetime
 import argparse
@@ -138,31 +138,51 @@ class LiteXCIConfig:
         log_path = self.output_dir / f"test.rpt"
         status = LiteXCIStatus.TEST_ERROR
 
-        # Open TTY and log file.
-        with serial.Serial(self.tty, self.tty_baudrate, timeout=1) as ser, open(log_path, "w") as log_file:
+        # Prepare LiteX Term command.
+        litex_term_command = f"litex_term {self.tty} --speed {self.tty_baudrate}"
+
+        # Open log file.
+        with open(log_path, "w") as log_file:
+            # Open a PTY Pair to communicate with LiteX Term.
+            main_fd, term_fd = pty.openpty()
+            process = subprocess.Popen(
+                shlex.split(litex_term_command),
+                stdin  = term_fd,
+                stdout = term_fd,
+                stderr = subprocess.STDOUT,
+                text   = True
+            )
+            os.close(term_fd)
+
             start_time = time.time()
 
-            # Iterate on Tests.
-            for test in self.tests:
+            try:
+                # Iterate on Tests.
+                for test in self.tests:
 
-                # Send Commands.
-                ser.write(bytes(test.send, "utf-8"))
+                    # Send Commands.
+                    os.write(main_fd, bytes(test.send, "utf-8"))
 
-                # Receive/Check Keywords.
-                if test.keyword is not None:
-                    _data = ""
-                    while time.time() - start_time < test.timeout:
-                        data = ser.read().decode('utf-8', errors='replace')
-                        if data:
-                            print(data, end='', flush=True)
-                            log_file.write(data)
-                            _data += data
-                            if test.keyword in _data:
-                                if test is self.tests[-1]:
-                                    status = LiteXCIStatus.SUCCESS
-                                break
-                # Sleep.
-                time.sleep(test.sleep)
+                    # Receive/Check Keywords.
+                    if test.keyword is not None:
+                        _data = ""
+                        while time.time() - start_time < test.timeout:
+                            data = os.read(main_fd, 1).decode('utf-8', errors='replace')
+                            if data:
+                                print(data, end='', flush=True)
+                                log_file.write(data)
+                                _data += data
+                                if test.keyword in _data:
+                                    if test is self.tests[-1]:
+                                        status = LiteXCIStatus.SUCCESS
+                                    break
+                    # Sleep.
+                    time.sleep(test.sleep)
+
+            finally:
+                os.close(main_fd)
+                process.terminate()
+                process.wait()
 
         return status
 
@@ -233,7 +253,7 @@ def list_configs(configs):
     for name in configs:
         print(f"- {name}")
 
-def run_config_tests(name, config, report, steps, report_filename, test_start_time, config_file):
+def run_config_tests(name, config, report, steps, report_filename, test_start_time, config_file, test_only):
     # Format Name.
     name = format_name(name)
     config.set_name(name)
@@ -241,7 +261,11 @@ def run_config_tests(name, config, report, steps, report_filename, test_start_ti
     # Run Config's Steps.
     start_time = time.time()
     for step in steps:
-        status = getattr(config, step)()
+        # When --test-only, skip compilation steps.
+        if test_only and (step in ["firmware_build", "gateware_build", "software_build"]):
+            status = LiteXCIStatus.NOT_RUN
+        else:
+            status = getattr(config, step)()
         report[name][step.capitalize()] = enum_to_str(status)
         update_report_timing(report, name, start_time)
         generate_html_report(report, report_filename, steps, test_start_time, config_file)
@@ -295,10 +319,6 @@ def main():
         "test",
         "exit",
     ]
-    # When --test-only, skip compilation steps.
-    if args.test_only:
-        compile_steps = ["firmware_build", "gateware_build", "software_build"]
-        steps = [step for step in steps if step not in compile_steps]
 
     # Initialize Report.
     report = {format_name(name): {step.capitalize(): LiteXCIStatus.NOT_RUN for step in steps} for name in litex_ci_configs}
@@ -309,7 +329,7 @@ def main():
     for name, config in litex_ci_configs.items():
         if selected_config and name != selected_config:
             continue
-        run_config_tests(name, config, report, steps, args.report, start_time, args.config_file)
+        run_config_tests(name, config, report, steps, args.report, start_time, args.config_file, args.test_only)
 
     # Finish Report.
     generate_html_report(report, args.report, steps, start_time, args.config_file)
