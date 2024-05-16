@@ -98,11 +98,21 @@ def linux_build(cpu_type):
 
             return ret.returncode
 
-def linux_prepare_tftp(tftp_root=tftp_root, rootfs="ram0", cpu_type=""):
-    extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"]
-    ret  = os.system(f"cp images/* {tftp_root}/")
-    ret |= os.system(f"cp images/boot_{extra_name}rootfs_{rootfs}.json {tftp_root}/boot.json")
-    return ret
+def linux_prepare_tftp(soc_json, tftp_root=tftp_root):
+    base_dir   = os.path.dirname(soc_json)
+    images_dir = os.path.join(base_dir, "images")
+
+    # Check if linux_copy_images was called previously (ie if software was build).
+    if not os.path.exists(images_dir):
+        return 1
+
+    # Copy files to tftp directory.
+    for filename in os.listdir(images_dir):
+        try:
+            shutil.copyfile(os.path.join(images_dir, filename), os.path.join(tftp_root, filename))
+        except Exception as err:
+            return 1
+    return 0
 
 def linux_copy_images(soc_json):
     base_dir   = os.path.dirname(soc_json)
@@ -240,8 +250,16 @@ def main():
     parser.add_argument("--generate-dtb", action="store_true", help="Prepare Linux Device Tree.")
     parser.add_argument("--prepare-tftp", action="store_true", help="Prepare/Copy Linux Images to TFTP root directory.")
     parser.add_argument("--copy-images",  action="store_true", help="Copy Linux Images to target build directory.")
+    parser.add_argument("--prepare-only", action="store_true", help="Only prepare tftp. Assumes necessary binaries are already available.")
 
     args = parser.parse_args()
+
+    if args.prepare_only:
+        args.clean        = False
+        args.generate_dtb = False
+        args.build        = False
+        args.copy_images  = False
+        args.prepare_tftp = True
 
     # ErrorsCode.
     # -----------
@@ -298,17 +316,17 @@ def main():
         if linux_build(cpu_type) != 0:
             return ErrorCode.BUILD_ERROR
 
-    # TFTP-Prepare.
-    # -------------
-    if args.prepare_tftp:
-        if linux_prepare_tftp(rootfs=args.rootfs, cpu_type=cpu_type) != 0:
-            return ErrorCode.TFTP_ERROR
-
     # Images Copy.
     # ------------
     if args.copy_images:
         if linux_copy_images(soc_json=args.soc_json) != 0:
             return ErrorCode.COPY_ERROR
+
+    # TFTP-Prepare.
+    # -------------
+    if args.prepare_tftp:
+        if linux_prepare_tftp(soc_json=args.soc_json) != 0:
+            return ErrorCode.TFTP_ERROR
 
     return ErrorCode.SUCCESS
 
