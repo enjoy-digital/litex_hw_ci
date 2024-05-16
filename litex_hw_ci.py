@@ -267,8 +267,11 @@ def run_config_tests(name, config, report, steps, report_filename, test_start_ti
     start_time = time.time()
     for step in steps:
         # When --test-only, skip compilation steps.
-        if test_only and (step in ["firmware_build", "gateware_build", "software_build"]):
+        if test_only and (step in ["firmware_build", "gateware_build"]):
             status = LiteXCIStatus.NOT_RUN
+        elif test_only and (step in ["software_build"]):
+            config.software_command += " --prepare-only"
+            status = getattr(config, step)()
         else:
             status = getattr(config, step)()
         report[name][step.capitalize()] = enum_to_str(status)
