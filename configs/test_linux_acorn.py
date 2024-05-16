@@ -40,10 +40,10 @@ litex_ci_configs = {
     "acorn_vexriscv_32_bit_4_cores_wishbone" : LiteXCIConfig(
         target           = "litex_acorn_baseboard_mini",
         gateware_command = f"--sys-clk-freq 100e6 --bus-standard=wishbone \
-        --cpu-type=vexriscv_smp --cpu-count=2 --cpu-variant=linux \
+        --cpu-type=vexriscv_smp --cpu-count=4 --cpu-variant=linux \
         --dcache-width=64 --dcache-size=8192 --dcache-ways=2 \
         --icache-width=64 --icache-size=8192 --icache-ways=2 \
-        --dtlb-size=6 --with-coherent-dma --bus-bursting \
+        --dtlb-size=6 --with-coherent-dma --bus-bursting --with-rvc --with-fpu \
         --with-sata --with-ethernet --eth-ip={local_ip} --remote-ip={remote_ip}",
         software_command = "cd linux && python3 make.py {output_dir}/soc.json " + linux_build_args,
         setup_command    = "",
