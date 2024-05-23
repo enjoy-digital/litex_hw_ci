@@ -1,0 +1,2 @@
+# Ethernet
+CONFIG_IP_PNP=y
