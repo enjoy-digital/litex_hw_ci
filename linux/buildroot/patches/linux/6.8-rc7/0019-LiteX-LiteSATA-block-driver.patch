@@ -1,7 +1,7 @@
-From 7c43225d93f61716e5c54d73a1fa816caa3eed9a Mon Sep 17 00:00:00 2001
+From eabeba80a9eced0ca165a51b84c37bf7b05e7d31 Mon Sep 17 00:00:00 2001
 From: Gabriel Somlo <gsomlo@gmail.com>
 Date: Fri, 19 Aug 2022 15:30:28 -0400
-Subject: [PATCH 19/19] LiteX: LiteSATA block driver
+Subject: [PATCH] LiteX: LiteSATA block driver
 
 Driver for the LiteX/LiteSATA block device.
 
@@ -14,7 +14,7 @@ Signed-off-by: Gabriel Somlo <gsomlo@gmail.com>
  create mode 100644 drivers/block/litesata.c
 
 diff --git a/drivers/block/Kconfig b/drivers/block/Kconfig
-index 5b9d4aaebb81..b9501e1c3076 100644
+index 5b9d4aaebb81d4..b9501e1c307698 100644
 --- a/drivers/block/Kconfig
 +++ b/drivers/block/Kconfig
 @@ -88,6 +88,12 @@ config N64CART
@@ -31,7 +31,7 @@ index 5b9d4aaebb81..b9501e1c3076 100644
  	tristate
  
 diff --git a/drivers/block/Makefile b/drivers/block/Makefile
-index 101612cba303..6c4298b9d42c 100644
+index 101612cba303a3..6c4298b9d42c7b 100644
 --- a/drivers/block/Makefile
 +++ b/drivers/block/Makefile
 @@ -18,6 +18,7 @@ obj-$(CONFIG_PS3_VRAM)		+= ps3vram.o
@@ -44,7 +44,7 @@ index 101612cba303..6c4298b9d42c 100644
  obj-$(CONFIG_CDROM_PKTCDVD)	+= pktcdvd.o
 diff --git a/drivers/block/litesata.c b/drivers/block/litesata.c
 new file mode 100644
-index 000000000000..b820379ca507
+index 00000000000000..531153d88983cd
 --- /dev/null
 +++ b/drivers/block/litesata.c
 @@ -0,0 +1,395 @@
@@ -400,9 +400,9 @@ index 000000000000..b820379ca507
 +	if (err)
 +		return err;
 +
-+	gendisk = blk_alloc_disk(NUMA_NO_NODE);
-+	if (!gendisk)
-+		return -ENOMEM;
++	gendisk = blk_alloc_disk(NULL, NUMA_NO_NODE);
++	if (IS_ERR(gendisk))
++		return PTR_ERR(gendisk);
 +
 +	err = devm_add_action_or_reset(dev, litesata_devm_put_disk, gendisk);
 +	if (err)
@@ -443,6 +443,3 @@ index 000000000000..b820379ca507
 +MODULE_DESCRIPTION("LiteX LiteSATA block driver");
 +MODULE_AUTHOR("Gabriel Somlo <gsomlo@gmail.com>");
 +MODULE_LICENSE("GPL v2");
--- 
-2.43.0
-
