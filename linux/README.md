@@ -14,9 +14,9 @@ This document outlines the current status of LiteX Linux builds and provides a g
 ### CPU Compatibility
 
 - **vexriscv_smp**: Fully supported.
-- **naxriscv 32-bit**: Fully compatible.
-- **naxriscv 64-bit**: Compatibility is partial. Stable operation requires **ABI=lp64** and excludes **fdc** extensions, as their inclusion leads to kernel panic.
-- **Rocket CPU**: Builds successfully but encounters a boot hang with the error: `Waiting for root device /dev/ram0...`.
+- **naxriscv 32-bit**: Fully supported.
+- **naxriscv 64-bit**: Fully supported.
+- **Rocket CPU**: Fully supported.
 
 Testing has been performed on the Digilent Arty platform and the LiteX Acorn Baseboard mini.
 
