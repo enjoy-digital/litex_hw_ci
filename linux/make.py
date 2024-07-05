@@ -283,6 +283,8 @@ def main():
             cpu_type = "vexriscv"
         elif cpu_type.startswith("vexiiriscv 32-bit"):
             cpu_type = "vexiiriscv_32"
+        elif cpu_type.startswith("vexiiriscv 64-bit"):
+            cpu_type = "vexiiriscv_64"
         elif cpu_type.startswith("naxriscv 32-bit"):
             cpu_type = "naxriscv_32"
         elif cpu_type.startswith("naxriscv 64-bit"):
