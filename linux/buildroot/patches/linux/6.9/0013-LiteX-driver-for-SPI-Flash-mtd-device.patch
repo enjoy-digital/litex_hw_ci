@@ -395,7 +395,7 @@ index 000000000000..82744962d938
 +	return len;
 +}
 +
-+static ssize_t spi_flash_nor_write_reg(struct spi_nor *nor, u8 opcode,
++static int spi_flash_nor_write_reg(struct spi_nor *nor, u8 opcode,
 +				       const u8 *buf, size_t len)
 +{
 +	/* Write WRITE ENABLE command*/
