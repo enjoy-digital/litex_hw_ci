@@ -159,6 +159,8 @@ def generate_dts(soc_json, rootfs="ram0", cpu_type=""):
     initrd = "enabled" if rootfs == "ram0" else "disabled"
     if cpu_type.startswith("naxriscv"):
         cpu_type = "naxriscv"
+    if cpu_type.startswith("vexiiriscv"):
+        cpu_type = "vexiiriscv"
     if rootfs == "ram0" and cpu_type == "rocket":
         initrd_start = 0x02000000
         initrd_size  = 0x00400000
@@ -279,6 +281,8 @@ def main():
         cpu_type = json_content["constants"]["config_cpu_human_name"]
         if cpu_type.startswith("vexriscv"):
             cpu_type = "vexriscv"
+        elif cpu_type.startswith("vexiiriscv 32-bit"):
+            cpu_type = "vexiiriscv_32"
         elif cpu_type.startswith("naxriscv 32-bit"):
             cpu_type = "naxriscv_32"
         elif cpu_type.startswith("naxriscv 64-bit"):
