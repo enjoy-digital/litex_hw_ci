@@ -313,7 +313,13 @@ def main():
     #  Linux Build.
     # -------------
     if args.build:
-        extra_name = {True: "rocket_", False: ""}[cpu_type == "rocket"] # FIXME: Avoid/Remove.
+        # FIXME: Avoid/Remove.
+        if cpu_type.startswith("rocket"):
+            extra_name = "rocket_"
+        elif cpu_type.startswith("vexiiriscv"):
+            extra_name = "vexiiriscv_"
+        else:
+            extra_name = ""
         if copy_file(f"images/boot_{extra_name}rootfs_{args.rootfs}.json", "images/boot.json") != 0:
             return ErrorCode.BUILD_ERROR
         linux_generate_motd(cpu_type)
