@@ -12,11 +12,13 @@ from litex_hw_ci import LiteXCIConfig, LiteXCITest, get_local_ip
 
 # Notes:
 # Tested configs:
-# - VexRiscv 32-bit / Wishbone Bus / 4 cores.
-# - NaxRiscv 32-bit / Wishbone Bus / FPU.
-# - NaxRiscv 32-bit / AXI-Lite Bus / FPU.
-# - NaxRiscv 64-bit / Wishbone Bus / FPU.
-# - NaxRiscv 64-bit / AXI-Lite Bus / FPU.
+# - VexRiscv   32-bit / Wishbone Bus / 4 cores.
+# - NaxRiscv   32-bit / Wishbone Bus / FPU.
+# - NaxRiscv   32-bit / AXI-Lite Bus / FPU.
+# - NaxRiscv   64-bit / Wishbone Bus / FPU.
+# - NaxRiscv   64-bit / AXI-Lite Bus / FPU.
+# - VexiiRiscv 32-bit / AXI-Lite Bus.
+# - VexiiRiscv 64-bit / AXI-Lite Bus.
 
 local_ip    = "192.168.1.50"
 remote_ip   = get_local_ip()
@@ -140,7 +142,6 @@ litex_ci_configs = {
     # Acorn Baseboard Mini running VexiiRiscv-32-bit with:
     # - AXI-Lite Bus.
     # - 1 Core.
-    # - FPU.
     # - Coherent DMA.
     # - 1Gbps Ethernet / 1000BaseX with SFP module.
     "acorn_vexiiriscv_32_bit_axi_lite" : LiteXCIConfig(
@@ -158,7 +159,6 @@ litex_ci_configs = {
     # Acorn Baseboard Mini running VexiiRiscv-64-bit with:
     # - AXI-Lite Bus.
     # - 1 Core.
-    # - FPU.
     # - Coherent DMA.
     # - 1Gbps Ethernet / 1000BaseX with SFP module.
     "acorn_vexiiriscv_64_bit_axi_lite" : LiteXCIConfig(
