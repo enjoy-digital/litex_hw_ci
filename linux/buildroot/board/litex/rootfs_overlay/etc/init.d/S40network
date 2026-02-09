@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# Simple network bring-up for LiteX Linux images.
+# Default: DHCP via udhcpc. Optional static config via /etc/litex-network.conf.
+#
+
+INTERFACE=eth0
+CONFIG=/etc/litex-network.conf
+
+load_config() {
+    [ -f "$CONFIG" ] && . "$CONFIG"
+}
+
+set_resolv() {
+    [ -n "$DNS" ] || return 0
+    : > /etc/resolv.conf
+    for s in $DNS; do
+        echo "nameserver $s" >> /etc/resolv.conf
+    done
+}
+
+start() {
+    ifconfig $INTERFACE up
+
+    if load_config && [ -n "$IPADDR" ]; then
+        if [ -n "$NETMASK" ]; then
+            ifconfig $INTERFACE $IPADDR netmask $NETMASK up
+        else
+            ifconfig $INTERFACE $IPADDR up
+        fi
+        if [ -n "$GATEWAY" ]; then
+            route add default gw $GATEWAY dev $INTERFACE 2>/dev/null
+        fi
+        set_resolv
+    else
+        # DHCP in background; default.script will install routes/DNS.
+        udhcpc -i $INTERFACE -b -t 5 -T 3 -q
+    fi
+}
+
+stop() {
+    ifconfig $INTERFACE down
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        stop
+        start
+        ;;
+esac
