@@ -34,6 +34,10 @@ The Linux images bring up `eth0` with DHCP by default at boot. If you need a
 static configuration, edit `/etc/litex-network.conf` in the rootfs overlay
 before building.
 
+Quick verification after boot:
+- `route -n` should show a default route.
+- `/etc/resolv.conf` should contain `nameserver` entries.
+
 1. Connect the target device to a PC using an RJ45 cable. If the PC's IP address is not *192.168.1.100*, specify a different address using the `--remote-ip` argument during build.
 2. Validate the network interface's readiness with `ifconfig`.
 3. Use the `route` command to identify the gateway IP address.
