@@ -7,10 +7,11 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
 """Block-by-block DFU download with status polling after each block (pyusb), then manifest + reset.
-Usage: dfu_write.py VID PID ALT FILE (VID/PID in hex). Stops at the first block that times out or
+Usage: dfu_write.py VID PID ALT FILE [DELAY_MS] (VID/PID in hex; DELAY_MS pauses between blocks). Stops at the first block that times out or
 reports an error. Used where dfu-util fails (ButterStick bootloader, see boards/gsd_butterstick.md)."""
 import sys, time, usb.core, usb.util
 vid, pid, alt, path = int(sys.argv[1], 16), int(sys.argv[2], 16), int(sys.argv[3]), sys.argv[4]
+delay = float(sys.argv[5]) / 1000 if len(sys.argv) > 5 else 0.0
 data = open(path, "rb").read()
 d = usb.core.find(idVendor=vid, idProduct=pid)
 if d is None: sys.exit("no device")
@@ -35,6 +36,7 @@ for b in range(n):
         print("block", b, "of", n, "ERR", e, "%.1fs" % (time.time() - t)); sys.exit(1)
     if s[0] != 0 or s[4] != 5:
         print("block", b, "bad status", s); sys.exit(1)
+    if delay: time.sleep(delay)
     if b % 100 == 0: print("block", b, "ok %.1fs" % (time.time() - t), flush=True)
 print("all", n, "blocks ok %.1fs" % (time.time() - t), flush=True)
 d.ctrl_transfer(0x21, 1, n, 0, b"", timeout=10000)
