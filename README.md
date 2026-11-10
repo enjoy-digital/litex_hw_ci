@@ -30,6 +30,28 @@ reuse in other Hardware/FPGA projects. Its focus is on simplicity and ease of us
 Please note that this project is currently a work in progress and is subject to change as we continue to
 experiment with more setups and boards.
 
+[> Agent-driven tests (2026).
+----------------------------
+
+Tests can now be described as short test packs that an agent (or a person) runs, instead of fixed
+configuration files that mix the test with the lab setup:
+
+- `suites/`: what to test and how to judge it (`bios`, `litedram`, ...).
+- `boards/`: per-board hints that litex-boards does not give (load method, console, quirks).
+- `tools/`: `ykush.py` (YKUSH ports over pyusb, no `ykushcmd` needed) and `dfu_load.sh`.
+- `AGENTS.md`: how a run goes and the rules.
+
+Where each board is plugged (host, hub port, serial port, IP) stays in each lab's own inventory.
+
+To use the YKUSH and DFU boards without root, a udev rule such as:
+```
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f2f7", MODE="0660", GROUP="plugdev"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="5af[01]", MODE="0660", GROUP="plugdev"
+```
+
+The 2024 runner below (`litex_hw_ci.py` and `configs/`) still works, and is still used for the Linux
+and NuttX boot tests.
+
 [> Testing process.
 -------------------
 
