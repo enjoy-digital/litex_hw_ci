@@ -11,6 +11,17 @@
   - The alt names read over USB can be shifted by one string index (seen 2026-11-10: alt 1 showed
     as "flash @0x200000 (gateware)"). Trust the source, not the names.
   - A running LiteX image exposes a DFU *runtime* interface; `dfu-util` detaches it into the bootloader.
+- **No button for CI (recommended):** program `BL_MAGIC1` once in flash security register 3. The
+  bootloader then stays in DFU at every power-up (and keeps the flag), so a run is: power the port,
+  load with `tools/dfu_write.py ... 20`, send a DFU detach to start the image, test. Procedure:
+  1. Build the service image (Etherbone + raw SPI flash master; 50 MHz to meet timing):
+     `tools/butterstick/service_soc.py --sys-clk-freq=50e6 --uart-name=crossover --with-etherbone
+     --eth-ip=<ip> --with-spi-flash --csr-csv=csr.csv --build`
+  2. Load it over DFU (BTN0 one last time if the board is not in DFU), detach, start `litex_server`.
+  3. `tools/butterstick/dfu_magic.py --csr-csv csr.csv` (read only: JEDEC id, SR1/SR2, register 3), then
+     with `--write` (erase register 3, program the magic, read back). It stops on a non-Winbond id or
+     when LB3 is set.
+  To undo, erase security register 3 with the same image (command 0x44 at 0x003000).
 - **Boot:** at power-on the bootloader jumps straight to the gateware at 0x200000 unless BTN0 is held
   or a magic word is in security register 3. If that partition is erased or invalid, the board shows
   nothing on USB: **hold BTN0 while powering it** to get the DFU bootloader back, then reload.
@@ -20,6 +31,10 @@
   - Through a YKUSH, `dfu-util` timed out on the first block every time, and `tools/dfu_write.py` froze
     the bootloader at a random block (the LEDs stop on the green "download" pattern). Each freeze
     leaves the gateware partition half-written, and BTN0 is needed at power-on to get the bootloader back.
+  - On another USB controller of the same host, still through the YKUSH, with 20 ms between blocks
+    (`dfu_write.py ... 20`), 1350 blocks loaded in 54 s, three times in a row.
+  - Holding BTN0 more than ~5 s after power-up makes the bootloader reset (upgrade mode) in the
+    middle of a download: release it within ~2 s.
   - Connected directly to the host, `tools/dfu_write.py 1209 5af1 0 gsd_butterstick.bit` wrote all
     1350 blocks in 7.9 s; `dfu-util` was not retried on that connection.
   - `litedram` PASS over Etherbone (`--uart-name=crossover --with-etherbone`): 256 MiB DDR3 16-bit @

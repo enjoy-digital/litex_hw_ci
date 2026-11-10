@@ -12,7 +12,8 @@ An agent (or a person) combines the two.
   file does not tell you goes here.
 - `tools/`: small helpers with no lab knowledge: `ykush.py` (YKUSH hub ports over pyusb),
   `dfu_load.sh` (load through a DFU bootloader with dfu-util and reset), `dfu_write.py` (pyusb DFU
-  writer that checks the status after each block, for bootloaders where dfu-util fails).
+  writer that checks the status after each block, with an optional delay between blocks, for
+  bootloaders where dfu-util fails), `butterstick/` (one-time no-button setup, see its board hint).
 - `litex_hw_ci.py`, `configs/`, `linux/`, `nuttx/`: the 2024 runner and its configs (Linux and NuttX
   boots on several CPUs). Still usable; new tests go in `suites/` and `boards/`.
 
