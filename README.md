@@ -38,7 +38,7 @@ configuration files that mix the test with the lab setup:
 
 - `suites/`: what to test and how to judge it (`bios`, `litedram`, ...).
 - `boards/`: per-board hints that litex-boards does not give (load method, console, quirks).
-- `tools/`: `ykush.py` (YKUSH ports over pyusb, no `ykushcmd` needed) and `dfu_load.sh`.
+- `tools/`: `ykush.py` (YKUSH ports over pyusb, no `ykushcmd` needed) `dfu_load.sh` and `dfu_write.py` (DFU loading).
 - `AGENTS.md`: how a run goes and the rules.
 
 Where each board is plugged (host, hub port, serial port, IP) stays in each lab's own inventory.
